@@ -92,6 +92,12 @@ model Partnership {
   awardPlaque  Boolean    @default(false)
   createdAt    DateTime   @default(now())
 
+  // Drawn signature (data URL) attesting to everything checked on this sheet
+  // at the time of signing. Cleared by every entry mutation that touches
+  // this partnership or its student, so a stale signature can never linger.
+  signatureData String?
+  signedAt      DateTime?
+
   danceEntries    DanceEntry[]
   divisionEntries DivisionEntry[]
 
@@ -222,12 +228,14 @@ model FormationTeam {
   id        Int      @id @default(autoincrement())
   studioId  Int
   studio    Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  // Team's own label (e.g. "Advanced Team") — distinct from the dance it performs.
+  name      String
   danceName String
   createdAt DateTime @default(now())
 
   members FormationMember[]
 
-  @@unique([studioId, danceName])
+  @@unique([studioId, name])
 }
 
 model FormationMember {

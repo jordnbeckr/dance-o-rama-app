@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useMemo } from 'react'
 import { addDanceEntry, removeDanceEntry } from '@/app/actions/danceEntries'
-import { AGE_LABELS, DAY_COLORS, DAY_BG_COLORS, studentHasPaidFor, danceDay, Day } from '@/lib/divisions'
+import { DANCE_AGE_LABELS, AGE_LABELS, DAY_COLORS, DAY_BG_COLORS, studentHasPaidFor, danceDay, Day } from '@/lib/divisions'
 
 type Dance = { id: number; name: string; style: string }
 type Entry = { id: number; danceId: number; category: string; ageCategory: string; level: string }
@@ -138,7 +138,7 @@ export default function DanceGrid({
                 className="text-xs font-semibold px-2 py-1.5 rounded-t"
                 style={{ backgroundColor: '#f5f6f8' }}
               >
-                {AGE_LABELS[g.ageCategory] ?? g.ageCategory} · {g.level}
+                {DANCE_AGE_LABELS[g.ageCategory] ?? AGE_LABELS[g.ageCategory] ?? g.ageCategory} · {g.level}
               </div>
             )}
             <div className="overflow-x-auto">

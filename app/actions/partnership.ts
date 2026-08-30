@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { requireStudio } from './shared'
+import { requireStudio, clearPartnershipSignature } from './shared'
 
 export async function getOrCreatePartnership(
   studioSlug: string,
@@ -33,6 +33,7 @@ export async function setAwardPlaque(studioSlug: string, partnershipId: number, 
   const partnership = await db.partnership.findFirst({ where: { id: partnershipId, studioId: studio.id } })
   if (!partnership) return { error: 'Partnership not found' }
   await db.partnership.update({ where: { id: partnershipId }, data: { awardPlaque: value } })
+  await clearPartnershipSignature(partnershipId)
   revalidatePath(`/studio/${studioSlug}/entries/${partnershipId}`)
 }
 

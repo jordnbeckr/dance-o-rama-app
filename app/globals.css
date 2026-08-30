@@ -94,3 +94,10 @@ body {
   font-size: 0.8125rem;
   padding: 2px 0;
 }
+
+@media print {
+  .no-print,
+  button {
+    display: none !important;
+  }
+}

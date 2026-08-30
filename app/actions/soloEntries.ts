@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { requireStudio } from './shared'
+import { requireStudio, clearSignaturesForStudent } from './shared'
 import { assertBeforeDeadline, DeadlinePassedError } from '@/lib/deadline'
 import { SOLO_DAY, studentHasPaidFor } from '@/lib/divisions'
 
@@ -55,6 +55,7 @@ export async function setSoloEntry(
       instructorId,
     },
   })
+  await clearSignaturesForStudent(studentId)
 
   revalidatePath(`/studio/${studioSlug}/entries`)
   revalidatePath('/admin/master')
@@ -65,6 +66,7 @@ export async function clearSoloEntry(studioSlug: string, studentId: number) {
   const entry = await db.soloEntry.findFirst({ where: { studentId, studioId: studio.id } })
   if (!entry) return { error: 'Entry not found' }
   await db.soloEntry.delete({ where: { studentId } })
+  await clearSignaturesForStudent(studentId)
   revalidatePath(`/studio/${studioSlug}/entries`)
   revalidatePath('/admin/master')
 }

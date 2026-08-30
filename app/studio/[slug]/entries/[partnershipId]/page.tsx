@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import PairingWorkspace from './PairingWorkspace'
 import PlaqueToggle from './PlaqueToggle'
+import PrintButton from './PrintButton'
 
 export default async function PartnershipPage({
   params,
@@ -65,13 +66,16 @@ export default async function PartnershipPage({
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
-      <div>
-        <Link href={`/studio/${slug}/entries`} className="text-sm" style={{ color: 'var(--muted)' }}>
-          ← All pairings
-        </Link>
-        <h1 className="text-2xl font-bold mt-1">
-          {partnership!.student.firstName} {partnership!.student.lastName} &amp; {partnership!.instructor.name}
-        </h1>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <Link href={`/studio/${slug}/entries`} className="no-print text-sm" style={{ color: 'var(--muted)' }}>
+            ← All pairings
+          </Link>
+          <h1 className="text-2xl font-bold mt-1">
+            {partnership!.student.firstName} {partnership!.student.lastName} &amp; {partnership!.instructor.name}
+          </h1>
+        </div>
+        <PrintButton />
       </div>
 
       <PlaqueToggle slug={slug} partnershipId={id} initialValue={partnership!.awardPlaque} />
@@ -108,10 +112,13 @@ export default async function PartnershipPage({
         }
         formationTeams={studio!.formationTeams.map(t => ({
           id: t.id,
+          name: t.name,
           danceName: t.danceName,
           members: t.members.map(m => ({ id: m.id, studentId: m.studentId })),
         }))}
         coupleEntries={coupleEntries}
+        signatureData={partnership!.signatureData}
+        signedAt={partnership!.signedAt ? partnership!.signedAt.toISOString() : null}
       />
     </div>
   )

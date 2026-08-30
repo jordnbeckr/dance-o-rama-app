@@ -1,7 +1,6 @@
 import { db } from '@/lib/db'
 import EntryPicker from './EntryPicker'
 import SoloManager from './SoloManager'
-import FormationBuilder from './FormationBuilder'
 
 export default async function EntriesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -20,10 +19,6 @@ export default async function EntriesPage({ params }: { params: Promise<{ slug: 
           instructor: true,
           _count: { select: { danceEntries: true, divisionEntries: true } },
         },
-        orderBy: { createdAt: 'desc' },
-      },
-      formationTeams: {
-        include: { members: { include: { student: true, instructor: true } } },
         orderBy: { createdAt: 'desc' },
       },
     },
@@ -83,34 +78,6 @@ export default async function EntriesPage({ params }: { params: Promise<{ slug: 
             lastName: s.lastName,
             paidThursday: s.paidThursday,
             soloEntry: s.soloEntry,
-          }))}
-        />
-      </div>
-
-      <div className="space-y-4">
-        <div className="text-center">
-          <h2 className="text-xl font-bold">Formation Teams</h2>
-          <p className="text-sm" style={{ color: 'var(--muted)' }}>
-            Small = 4 couples, Medium = 5-6 couples, Large = 7-8 couples (a suggestion, not a hard limit).
-            Formation Teams run on Saturday.
-          </p>
-        </div>
-        <FormationBuilder
-          slug={slug}
-          students={studio.students}
-          instructors={studio.instructors}
-          teams={studio.formationTeams.map((t: {
-            id: number
-            danceName: string
-            members: { id: number; student: { firstName: string; lastName: string }; instructor: { name: string } | null }[]
-          }) => ({
-            id: t.id,
-            danceName: t.danceName,
-            members: t.members.map(m => ({
-              id: m.id,
-              studentName: `${m.student.firstName} ${m.student.lastName}`,
-              instructorName: m.instructor?.name ?? null,
-            })),
           }))}
         />
       </div>

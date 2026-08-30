@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { requireStudio } from './shared'
+import { requireStudio, clearPartnershipSignature } from './shared'
 import { assertBeforeDeadline, DeadlinePassedError } from '@/lib/deadline'
 import { studentHasPaidFor, danceDay } from '@/lib/divisions'
 
@@ -52,6 +52,7 @@ export async function addDanceEntry(
   } catch {
     return { error: 'This dance is already entered for this age/level/category combination.' }
   }
+  await clearPartnershipSignature(partnershipId)
 
   revalidatePath(`/studio/${studioSlug}/entries/${partnershipId}`)
   revalidatePath('/admin/master')
@@ -69,6 +70,7 @@ export async function removeDanceEntry(studioSlug: string, danceEntryId: number)
   })
   if (!entry) return { error: 'Entry not found' }
   await db.danceEntry.delete({ where: { id: danceEntryId } })
+  await clearPartnershipSignature(entry.partnershipId)
   revalidatePath(`/studio/${studioSlug}/entries/${entry.partnershipId}`)
   revalidatePath('/admin/master')
 }

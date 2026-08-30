@@ -7,7 +7,7 @@ import { formationSizeLabel, FORMATION_DAY, studentHasPaidFor } from '@/lib/divi
 type Student = { id: number; firstName: string; lastName: string; paidThursday: boolean; paidFriday: boolean; paidSaturday: boolean }
 type Instructor = { id: number; name: string }
 type Member = { id: number; studentName: string; instructorName: string | null }
-type Team = { id: number; danceName: string; members: Member[] }
+type Team = { id: number; name: string; danceName: string; members: Member[] }
 
 function TeamCard({ slug, team, students, instructors }: { slug: string; team: Team; students: Student[]; instructors: Instructor[] }) {
   const [, startTransition] = useTransition()
@@ -37,7 +37,7 @@ function TeamCard({ slug, team, students, instructors }: { slug: string; team: T
   }
 
   function handleDeleteTeam() {
-    if (!confirm(`Delete the formation team "${team.danceName}"?`)) return
+    if (!confirm(`Delete the formation team "${team.name}"?`)) return
     startTransition(() => {
       deleteFormationTeam(slug, team.id)
     })
@@ -47,9 +47,10 @@ function TeamCard({ slug, team, students, instructors }: { slug: string; team: T
     <div className="card overflow-hidden">
       <div className="px-4 py-2 flex items-center justify-between" style={{ backgroundColor: '#f5f6f8', borderBottom: '1px solid var(--border)' }}>
         <div>
-          <span className="font-semibold text-sm">{team.danceName}</span>
+          <span className="font-semibold text-sm">{team.name}</span>
+          <span className="text-xs ml-2" style={{ color: 'var(--muted)' }}>{team.danceName}</span>
           <span className="text-xs ml-2" style={{ color: 'var(--muted)' }}>
-            {team.members.length} dancer{team.members.length !== 1 && 's'} — {formationSizeLabel(team.members.length)}
+            — {team.members.length} dancer{team.members.length !== 1 && 's'} — {formationSizeLabel(team.members.length)}
           </span>
         </div>
         <button onClick={handleDeleteTeam} className="text-xs" style={{ color: '#dc2626' }}>Delete team</button>
@@ -100,7 +101,7 @@ function TeamCard({ slug, team, students, instructors }: { slug: string; team: T
   )
 }
 
-export default function FormationBuilder({
+export default function FormationsManager({
   slug,
   students,
   instructors,
@@ -113,15 +114,19 @@ export default function FormationBuilder({
 }) {
   const [, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [newName, setNewName] = useState('')
   const [newDanceName, setNewDanceName] = useState('')
 
   function handleCreateTeam() {
-    if (!newDanceName.trim()) return
+    if (!newName.trim() || !newDanceName.trim()) return
     setError(null)
     startTransition(async () => {
-      const result = await createFormationTeam(slug, newDanceName)
+      const result = await createFormationTeam(slug, newName, newDanceName)
       if ('error' in result) setError(result.error)
-      else setNewDanceName('')
+      else {
+        setNewName('')
+        setNewDanceName('')
+      }
     })
   }
 
@@ -134,14 +139,18 @@ export default function FormationBuilder({
         </div>
       )}
 
-      <div className="card p-4 flex gap-2 items-end">
-        <div className="flex-1">
-          <label className="block text-xs font-medium mb-1">New formation — dance name</label>
+      <div className="card p-4 flex gap-2 items-end flex-wrap">
+        <div className="flex-1" style={{ minWidth: 160 }}>
+          <label className="block text-xs font-medium mb-1">Team name</label>
+          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Advanced Team" className="field" />
+        </div>
+        <div className="flex-1" style={{ minWidth: 160 }}>
+          <label className="block text-xs font-medium mb-1">Dance</label>
           <input value={newDanceName} onChange={e => setNewDanceName(e.target.value)} placeholder="e.g. Argentine Tango" className="field" />
         </div>
         <button
           onClick={handleCreateTeam}
-          disabled={!newDanceName.trim()}
+          disabled={!newName.trim() || !newDanceName.trim()}
           className="px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           style={{ backgroundColor: 'var(--accent)', borderRadius: 4 }}
         >

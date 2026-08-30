@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { requireStudio } from './shared'
+import { requireStudio, clearPartnershipSignature } from './shared'
 import { assertBeforeDeadline, DeadlinePassedError } from '@/lib/deadline'
 import { DivisionSectionKey, divisionEventDay, studentHasPaidFor } from '@/lib/divisions'
 
@@ -41,6 +41,7 @@ export async function addDivisionEntry(
   } catch {
     return { error: 'This division is already entered for this pairing.' }
   }
+  await clearPartnershipSignature(partnershipId)
 
   revalidatePath(`/studio/${studioSlug}/entries/${partnershipId}`)
   revalidatePath('/admin/master')
@@ -53,6 +54,7 @@ export async function removeDivisionEntry(studioSlug: string, divisionEntryId: n
   })
   if (!entry) return { error: 'Entry not found' }
   await db.divisionEntry.delete({ where: { id: divisionEntryId } })
+  await clearPartnershipSignature(entry.partnershipId)
   revalidatePath(`/studio/${studioSlug}/entries/${entry.partnershipId}`)
   revalidatePath('/admin/master')
 }

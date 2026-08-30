@@ -1,6 +1,6 @@
 'use client'
 
-import { AGE_CATEGORIES_5, AGE_LABELS, LEVELS } from '@/lib/divisions'
+import { DANCE_AGE_CATEGORIES, DANCE_AGE_LABELS, LEVELS } from '@/lib/divisions'
 
 function Chip({
   label,
@@ -44,8 +44,8 @@ export default function AgeLevelPicker({
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--muted)', width: 50 }}>Age</span>
-        {AGE_CATEGORIES_5.map(age => (
-          <Chip key={age} label={AGE_LABELS[age] ?? age} checked={selectedAges.includes(age)} onChange={() => onToggleAge(age)} />
+        {DANCE_AGE_CATEGORIES.map(age => (
+          <Chip key={age} label={DANCE_AGE_LABELS[age] ?? age} checked={selectedAges.includes(age)} onChange={() => onToggleAge(age)} />
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-2">

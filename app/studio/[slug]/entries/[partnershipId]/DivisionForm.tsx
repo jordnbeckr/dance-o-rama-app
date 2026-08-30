@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { addDivisionEntry, removeDivisionEntry } from '@/app/actions/divisionEntries'
-import { DIVISION_SECTIONS, DivisionSectionKey, AGE_LABELS, DAY_COLORS, DAY_BG_COLORS, studentHasPaidFor } from '@/lib/divisions'
+import { DIVISION_SECTIONS, DivisionSectionKey, divisionAgeLabel, DAY_COLORS, DAY_BG_COLORS, studentHasPaidFor } from '@/lib/divisions'
 
 type Entry = { id: number; section: string; ageCategory: string; eventName: string }
 type StudentPaid = { firstName: string; paidThursday: boolean; paidFriday: boolean; paidSaturday: boolean }
@@ -134,7 +134,7 @@ export default function DivisionForm({
                         style={{ width: 15, height: 15, flexShrink: 0 }}
                         onChange={e => toggleAge(section, age, e.target.checked)}
                       />
-                      {AGE_LABELS[age] ?? age}
+                      {divisionAgeLabel(section, age)}
                     </label>
                   ))}
                 </div>

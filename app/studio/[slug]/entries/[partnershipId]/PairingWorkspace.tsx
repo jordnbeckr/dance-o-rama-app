@@ -7,6 +7,7 @@ import CoupleEventCards from './CoupleEventCards'
 import DanceGrid from './DanceGrid'
 import SoloCard from './SoloCard'
 import FormationCard from './FormationCard'
+import SignaturePad from './SignaturePad'
 import { SOLO_DAY, FORMATION_DAY, studentHasPaidFor } from '@/lib/divisions'
 
 type Dance = { id: number; name: string; style: string }
@@ -14,7 +15,7 @@ type DanceEntryT = { id: number; danceId: number; category: string; ageCategory:
 type DivisionEntryT = { id: number; section: string; ageCategory: string; eventName: string }
 type StudentPaid = { firstName: string; paidThursday: boolean; paidFriday: boolean; paidSaturday: boolean }
 type SoloEntryT = { entryType: string; routineName: string; danceName: string | null; instructorId: number | null }
-type FormationTeamT = { id: number; danceName: string; members: { id: number; studentId: number }[] }
+type FormationTeamT = { id: number; name: string; danceName: string; members: { id: number; studentId: number }[] }
 type CoupleEntryT = {
   id: number
   section: 'AmateurCouple' | 'Club'
@@ -36,6 +37,8 @@ export default function PairingWorkspace({
   soloEntry,
   formationTeams,
   coupleEntries,
+  signatureData,
+  signedAt,
 }: {
   slug: string
   partnershipId: number
@@ -48,6 +51,8 @@ export default function PairingWorkspace({
   soloEntry: SoloEntryT | null
   formationTeams: FormationTeamT[]
   coupleEntries: CoupleEntryT[]
+  signatureData: string | null
+  signedAt: string | null
 }) {
   const [selectedAges, setSelectedAges] = useState<string[]>(() =>
     Array.from(new Set(danceEntries.map(e => e.ageCategory)))
@@ -111,6 +116,14 @@ export default function PairingWorkspace({
           paidSaturday={studentHasPaidFor(student, FORMATION_DAY)}
         />
       </div>
+
+      <SignaturePad
+        slug={slug}
+        partnershipId={partnershipId}
+        studentName={student.firstName}
+        signatureData={signatureData}
+        signedAt={signedAt}
+      />
     </div>
   )
 }

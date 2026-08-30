@@ -2,12 +2,13 @@
 
 import { db } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { requireStudio } from './shared'
+import { requireStudio, clearSignaturesForStudent } from './shared'
 import { assertBeforeDeadline, DeadlinePassedError } from '@/lib/deadline'
 import { FORMATION_DAY, studentHasPaidFor } from '@/lib/divisions'
 
 export async function createFormationTeam(
   studioSlug: string,
+  name: string,
   danceName: string
 ): Promise<{ error: string } | { teamId: number }> {
   const studio = await requireStudio(studioSlug)
@@ -19,15 +20,17 @@ export async function createFormationTeam(
     throw e
   }
 
-  const name = danceName.trim()
-  if (!name) return { error: 'Dance name required' }
+  const trimmedName = name.trim()
+  const trimmedDance = danceName.trim()
+  if (!trimmedName) return { error: 'Team name required' }
+  if (!trimmedDance) return { error: 'Dance name required' }
 
   try {
-    const team = await db.formationTeam.create({ data: { studioId: studio.id, danceName: name } })
-    revalidatePath(`/studio/${studioSlug}/entries`)
+    const team = await db.formationTeam.create({ data: { studioId: studio.id, name: trimmedName, danceName: trimmedDance } })
+    revalidatePath(`/studio/${studioSlug}/formations`)
     return { teamId: team.id }
   } catch {
-    return { error: 'A formation team for this dance already exists' }
+    return { error: 'A formation team with this name already exists' }
   }
 }
 
@@ -36,7 +39,7 @@ export async function deleteFormationTeam(studioSlug: string, teamId: number) {
   const team = await db.formationTeam.findFirst({ where: { id: teamId, studioId: studio.id } })
   if (!team) return { error: 'Team not found' }
   await db.formationTeam.delete({ where: { id: teamId } })
-  revalidatePath(`/studio/${studioSlug}/entries`)
+  revalidatePath(`/studio/${studioSlug}/formations`)
   revalidatePath('/admin/master')
 }
 
@@ -72,8 +75,10 @@ export async function addFormationMember(
   } catch {
     return { error: 'That dancer is already on this team' }
   }
+  await clearSignaturesForStudent(studentId)
 
-  revalidatePath(`/studio/${studioSlug}/entries`)
+  revalidatePath(`/studio/${studioSlug}/formations`)
+  revalidatePath(`/studio/${studioSlug}/entries`, 'layout')
   revalidatePath('/admin/master')
 }
 
@@ -84,6 +89,8 @@ export async function removeFormationMember(studioSlug: string, memberId: number
   })
   if (!member) return { error: 'Member not found' }
   await db.formationMember.delete({ where: { id: memberId } })
-  revalidatePath(`/studio/${studioSlug}/entries`)
+  await clearSignaturesForStudent(member.studentId)
+  revalidatePath(`/studio/${studioSlug}/formations`)
+  revalidatePath(`/studio/${studioSlug}/entries`, 'layout')
   revalidatePath('/admin/master')
 }

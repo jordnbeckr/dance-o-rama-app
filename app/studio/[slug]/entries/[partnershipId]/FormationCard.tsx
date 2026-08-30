@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createFormationTeam, addFormationMember, removeFormationMember } from '@/app/actions/formations'
+import { addFormationMember, removeFormationMember } from '@/app/actions/formations'
 import { FORMATION_DAY, DAY_COLORS, DAY_BG_COLORS, formationSizeLabel } from '@/lib/divisions'
 
-type Team = { id: number; danceName: string; members: { id: number; studentId: number }[] }
+type Team = { id: number; name: string; danceName: string; members: { id: number; studentId: number }[] }
 
 export default function FormationCard({
   slug,
@@ -23,36 +23,28 @@ export default function FormationCard({
 }) {
   const [, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [newDanceName, setNewDanceName] = useState('')
+  const [pickedTeamId, setPickedTeamId] = useState('')
 
-  function toggleTeam(team: Team, join: boolean) {
+  const joinedTeams = teams.filter(t => t.members.some(m => m.studentId === studentId))
+  const availableTeams = teams.filter(t => !t.members.some(m => m.studentId === studentId))
+
+  function handleJoin() {
+    if (!pickedTeamId) return
     setError(null)
     startTransition(async () => {
-      if (join) {
-        const result = await addFormationMember(slug, team.id, studentId, instructorId)
-        if (result?.error) setError(result.error)
-      } else {
-        const member = team.members.find(m => m.studentId === studentId)
-        if (member) {
-          const result = await removeFormationMember(slug, member.id)
-          if (result?.error) setError(result.error)
-        }
-      }
+      const result = await addFormationMember(slug, Number(pickedTeamId), studentId, instructorId)
+      if (result?.error) setError(result.error)
+      else setPickedTeamId('')
     })
   }
 
-  function handleCreateAndJoin() {
-    if (!newDanceName.trim()) return
+  function handleLeave(team: Team) {
+    const member = team.members.find(m => m.studentId === studentId)
+    if (!member) return
     setError(null)
     startTransition(async () => {
-      const result = await createFormationTeam(slug, newDanceName)
-      if ('error' in result) {
-        setError(result.error)
-        return
-      }
-      const joinResult = await addFormationMember(slug, result.teamId, studentId, instructorId)
-      if (joinResult?.error) setError(joinResult.error)
-      else setNewDanceName('')
+      const result = await removeFormationMember(slug, member.id)
+      if (result?.error) setError(result.error)
     })
   }
 
@@ -79,7 +71,7 @@ export default function FormationCard({
       </div>
       <div className="p-3 space-y-2 flex-1" style={{ backgroundColor: DAY_BG_COLORS[FORMATION_DAY] }}>
         <p className="text-xs" style={{ color: 'var(--muted)' }}>
-          Small = 4 couples · Medium = 5-6 · Large = 7-8 (suggested, not a hard limit).
+          Ask your studio to set up a formation team if you don&apos;t see it below.
         </p>
         {error && <div className="banner-error">{error}</div>}
         {!paidSaturday ? (
@@ -88,45 +80,46 @@ export default function FormationCard({
           </p>
         ) : (
           <>
-            {teams.length === 0 && (
-              <p className="text-xs italic" style={{ color: 'var(--muted)' }}>No formation teams yet — create one below.</p>
-            )}
-            {teams.map(team => {
-              const isMember = team.members.some(m => m.studentId === studentId)
-              return (
-                <label key={team.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isMember}
-                    onChange={e => toggleTeam(team, e.target.checked)}
-                    style={{ accentColor: DAY_COLORS[FORMATION_DAY], width: 15, height: 15 }}
-                  />
-                  {team.danceName}
-                  <span className="text-xs" style={{ color: 'var(--muted)' }}>
-                    ({team.members.length} dancer{team.members.length !== 1 ? 's' : ''} — {formationSizeLabel(team.members.length)})
-                  </span>
-                </label>
-              )
-            })}
-            <div className="flex gap-2 items-end pt-1">
-              <div className="flex-1">
-                <label className="block text-xs font-medium mb-1">New team — dance name</label>
-                <input
-                  value={newDanceName}
-                  onChange={e => setNewDanceName(e.target.value)}
-                  placeholder="e.g. Argentine Tango"
-                  className="field"
-                />
+            {joinedTeams.length > 0 && (
+              <div className="space-y-1">
+                {joinedTeams.map(team => (
+                  <div key={team.id} className="flex items-center justify-between text-sm gap-2">
+                    <span>
+                      {team.name} <span className="text-xs" style={{ color: 'var(--muted)' }}>({team.danceName})</span>
+                    </span>
+                    <button onClick={() => handleLeave(team)} className="text-xs" style={{ color: '#dc2626' }}>Leave</button>
+                  </div>
+                ))}
               </div>
-              <button
-                onClick={handleCreateAndJoin}
-                disabled={!newDanceName.trim()}
-                className="px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                style={{ backgroundColor: 'var(--accent)', borderRadius: 4 }}
-              >
-                + Create &amp; join
-              </button>
-            </div>
+            )}
+
+            {availableTeams.length === 0 ? (
+              <p className="text-xs italic" style={{ color: 'var(--muted)' }}>
+                {teams.length === 0 ? 'No formation teams have been created yet.' : 'Already joined every team.'}
+              </p>
+            ) : (
+              <div className="flex gap-2 items-end pt-1">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium mb-1">Choose a formation</label>
+                  <select value={pickedTeamId} onChange={e => setPickedTeamId(e.target.value)} className="field">
+                    <option value="">Select…</option>
+                    {availableTeams.map(team => (
+                      <option key={team.id} value={team.id}>
+                        {team.name} — {team.danceName} ({team.members.length} dancer{team.members.length !== 1 ? 's' : ''}, {formationSizeLabel(team.members.length)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={handleJoin}
+                  disabled={!pickedTeamId}
+                  className="px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--accent)', borderRadius: 4 }}
+                >
+                  Join
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

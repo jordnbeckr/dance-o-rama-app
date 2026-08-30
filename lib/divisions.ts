@@ -42,6 +42,40 @@ export const AGE_LABELS: Record<string, string> = {
   D: 'D (70+)',
 }
 
+// Section 1's Closed/Open dance chart uses a finer-grained age scheme than
+// the divisions below — confirmed with Jordan as specific to that chart only;
+// All Around, Open Bronze, and Scholarship keep their own brackets.
+export const DANCE_AGE_CATEGORIES = [
+  'PreTeen1',
+  'PreTeen2',
+  'Junior',
+  'A',
+  'A1',
+  'A2',
+  'B',
+  'B1',
+  'B2',
+  'C',
+  'C1',
+  'C2',
+  'C3',
+] as const
+export const DANCE_AGE_LABELS: Record<string, string> = {
+  PreTeen1: 'Pre-Teen I (-8)',
+  PreTeen2: 'Pre-Teen II (9-12)',
+  Junior: 'Junior (13-17)',
+  A: 'A (16-21)',
+  A1: 'A1 (18+)',
+  A2: 'A2 (22+)',
+  B: 'B (30+)',
+  B1: 'B1 (40+)',
+  B2: 'B2 (50+)',
+  C: 'C (60+)',
+  C1: 'C1 (65+)',
+  C2: 'C2 (70+)',
+  C3: 'C3 (80+)',
+}
+
 export const LEVELS = [
   'Newcomer',
   'Assoc Bronze',
@@ -116,6 +150,17 @@ export function divisionEventDay(section: DivisionSectionKey, eventName: string)
   return (DIVISION_SECTIONS[section].events as readonly { name: string; day: Day }[]).find(
     e => e.name === eventName
   )?.day
+}
+
+// Open Bronze's "B" bracket runs 50+ on this division specifically, unlike
+// the 40+ used everywhere else "B" appears — same stored code, different
+// display label depending on which section it's read in.
+const DIVISION_AGE_LABEL_OVERRIDES: Partial<Record<DivisionSectionKey, Record<string, string>>> = {
+  OpenBronze3Dance: { B: 'B (50+)' },
+}
+
+export function divisionAgeLabel(section: DivisionSectionKey, age: string): string {
+  return DIVISION_AGE_LABEL_OVERRIDES[section]?.[age] ?? AGE_LABELS[age] ?? age
 }
 
 export const COUPLE_EVENT_SECTIONS = {

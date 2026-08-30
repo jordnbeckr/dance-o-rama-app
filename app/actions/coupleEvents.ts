@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { requireStudio } from './shared'
+import { requireStudio, clearSignaturesForStudent } from './shared'
 import { assertBeforeDeadline, DeadlinePassedError } from '@/lib/deadline'
 import { COUPLE_EVENT_SECTIONS, CoupleEventSectionKey, coupleEventDay, studentHasPaidFor } from '@/lib/divisions'
 
@@ -118,6 +118,8 @@ export async function addCoupleEventEntry(
   } catch {
     return { error: 'This couple is already entered in this event.' }
   }
+  await clearSignaturesForStudent(studentId)
+  if (partnerType === 'Student') await clearSignaturesForStudent(partnerId)
 
   revalidatePath(`/studio/${studioSlug}/couples`)
   revalidatePath('/admin/master')
@@ -138,6 +140,8 @@ export async function removeCoupleEventEntry(studioSlug: string, id: number) {
   })
   if (!entry) return { error: 'Entry not found' }
   await db.coupleEventEntry.delete({ where: { id } })
+  await clearSignaturesForStudent(entry.studentId)
+  if (entry.partnerStudentId) await clearSignaturesForStudent(entry.partnerStudentId)
   revalidatePath(`/studio/${studioSlug}/couples`)
   revalidatePath('/admin/master')
 }

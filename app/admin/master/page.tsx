@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { AGE_LABELS, DIVISION_SECTIONS, DivisionSectionKey, divisionEventDay, COUPLE_EVENT_SECTIONS, CoupleEventSectionKey, coupleEventDay, DAY_COLORS, SOLO_DAY, FORMATION_DAY, danceDay } from '@/lib/divisions'
+import { DANCE_AGE_LABELS, AGE_LABELS, DIVISION_SECTIONS, DivisionSectionKey, divisionEventDay, divisionAgeLabel, COUPLE_EVENT_SECTIONS, CoupleEventSectionKey, coupleEventDay, DAY_COLORS, SOLO_DAY, FORMATION_DAY, danceDay } from '@/lib/divisions'
 import PaidDaysBadge from '@/components/PaidDaysBadge'
 
 export default async function MasterViewPage({
@@ -57,7 +57,7 @@ export default async function MasterViewPage({
   // Division counts across all entries (informational, mirrors the "3+ entrants" note)
   const divisionCounts = new Map<string, number>()
   for (const e of divisionEntries) {
-    const label = `${DIVISION_SECTIONS[e.section as DivisionSectionKey]?.label ?? e.section} — ${e.eventName} (${AGE_LABELS[e.ageCategory] ?? e.ageCategory})`
+    const label = `${DIVISION_SECTIONS[e.section as DivisionSectionKey]?.label ?? e.section} — ${e.eventName} (${divisionAgeLabel(e.section as DivisionSectionKey, e.ageCategory)})`
     divisionCounts.set(label, (divisionCounts.get(label) ?? 0) + 1)
   }
 
@@ -140,7 +140,7 @@ export default async function MasterViewPage({
                   <td>{e.dance.name}</td>
                   <td style={{ color: DAY_COLORS[day] }}>{day}</td>
                   <td>{e.category}</td>
-                  <td>{AGE_LABELS[e.ageCategory] ?? e.ageCategory}</td>
+                  <td>{DANCE_AGE_LABELS[e.ageCategory] ?? AGE_LABELS[e.ageCategory] ?? e.ageCategory}</td>
                   <td>{e.level}</td>
                 </tr>
               )
@@ -164,7 +164,7 @@ export default async function MasterViewPage({
                   <td>{e.partnership.instructor.name}</td>
                   <td>{DIVISION_SECTIONS[e.section as DivisionSectionKey]?.label ?? e.section}</td>
                   <td style={{ color: day ? DAY_COLORS[day] : undefined }}>{day}</td>
-                  <td>{AGE_LABELS[e.ageCategory] ?? e.ageCategory}</td>
+                  <td>{divisionAgeLabel(e.section as DivisionSectionKey, e.ageCategory)}</td>
                   <td>{e.eventName}</td>
                 </tr>
               )
@@ -225,16 +225,17 @@ export default async function MasterViewPage({
           <span className="text-xs font-normal" style={{ color: DAY_COLORS[FORMATION_DAY] }}>({FORMATION_DAY})</span>
         </h2>
         <table className="data-table">
-          <thead><tr><th>Studio</th><th>Dance</th><th>Members</th></tr></thead>
+          <thead><tr><th>Studio</th><th>Team</th><th>Dance</th><th>Members</th></tr></thead>
           <tbody>
-            {formationTeams.map((t: { id: number; danceName: string; studio: { name: string }; members: { student: { firstName: string; lastName: string }; instructor: { name: string } | null }[] }) => (
+            {formationTeams.map((t: { id: number; name: string; danceName: string; studio: { name: string }; members: { student: { firstName: string; lastName: string }; instructor: { name: string } | null }[] }) => (
               <tr key={t.id}>
                 <td>{t.studio.name}</td>
+                <td>{t.name}</td>
                 <td>{t.danceName}</td>
                 <td>{t.members.map(m => `${m.student.firstName} ${m.student.lastName}${m.instructor ? ` & ${m.instructor.name}` : ''}`).join(', ') || '—'}</td>
               </tr>
             ))}
-            {formationTeams.length === 0 && <tr><td colSpan={3} className="italic" style={{ color: 'var(--muted)' }}>None yet.</td></tr>}
+            {formationTeams.length === 0 && <tr><td colSpan={4} className="italic" style={{ color: 'var(--muted)' }}>None yet.</td></tr>}
           </tbody>
         </table>
       </div>

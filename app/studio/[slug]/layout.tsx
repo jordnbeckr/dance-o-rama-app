@@ -23,7 +23,7 @@ export default async function StudioLayout({
   return (
     <div className="min-h-screen flex flex-col">
       <header
-        className="sticky top-0 z-50 flex items-center gap-0 shadow-md"
+        className="no-print sticky top-0 z-50 flex items-center gap-0 shadow-md"
         style={{ backgroundColor: 'var(--header)', minHeight: 64 }}
       >
         <div className="px-6 py-4 flex items-center gap-2 border-r border-white/10">
@@ -39,6 +39,7 @@ export default async function StudioLayout({
             { href: `/studio/${slug}/roster`, label: 'Roster' },
             { href: `/studio/${slug}/entries`, label: 'Entries' },
             { href: `/studio/${slug}/couples`, label: 'Couple Events' },
+            { href: `/studio/${slug}/formations`, label: 'Formations' },
             { href: `/studio/${slug}/summary`, label: 'Summary' },
           ].map(({ href, label }) => (
             <Link
@@ -64,7 +65,7 @@ export default async function StudioLayout({
       </header>
       {settings && (
         <div
-          className="text-center text-sm py-1.5 px-4"
+          className="no-print text-center text-sm py-1.5 px-4"
           style={
             pastDeadline
               ? { backgroundColor: '#fef2f2', color: '#dc2626', borderBottom: '1px solid #fecaca' }
