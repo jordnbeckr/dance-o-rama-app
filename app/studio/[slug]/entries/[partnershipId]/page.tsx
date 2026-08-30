@@ -36,6 +36,33 @@ export default async function PartnershipPage({
   const dances = await db.dance.findMany({ orderBy: [{ style: 'asc' }, { order: 'asc' }] })
   const soloEntry = await db.soloEntry.findUnique({ where: { studentId: partnership!.studentId } })
 
+  const rawCoupleEntries = await db.coupleEventEntry.findMany({
+    where: {
+      section: { in: ['AmateurCouple', 'Club'] },
+      OR: [{ studentId: partnership!.studentId }, { partnerStudentId: partnership!.studentId }],
+    },
+    include: { student: true, partnerStudent: true, partnerInstructor: true },
+  })
+  const coupleEntries = rawCoupleEntries.map(e => {
+    const isPrimarySide = e.studentId === partnership!.studentId
+    const partnerId =
+      e.partnerType === 'Instructor' ? e.partnerInstructorId : isPrimarySide ? e.partnerStudentId : e.studentId
+    const partnerLabel =
+      e.partnerType === 'Instructor'
+        ? e.partnerInstructor!.name
+        : isPrimarySide
+          ? `${e.partnerStudent!.firstName} ${e.partnerStudent!.lastName}`
+          : `${e.student.firstName} ${e.student.lastName}`
+    return {
+      id: e.id,
+      section: e.section as 'AmateurCouple' | 'Club',
+      eventName: e.eventName,
+      partnerType: e.partnerType as 'Instructor' | 'Student',
+      partnerId,
+      partnerLabel,
+    }
+  })
+
   return (
     <div className="max-w-5xl mx-auto space-y-5">
       <div>
@@ -84,6 +111,7 @@ export default async function PartnershipPage({
           danceName: t.danceName,
           members: t.members.map(m => ({ id: m.id, studentId: m.studentId })),
         }))}
+        coupleEntries={coupleEntries}
       />
     </div>
   )

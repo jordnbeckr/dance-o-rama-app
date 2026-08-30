@@ -24,9 +24,9 @@ export default function PlaqueToggle({
   }
 
   return (
-    <label className="checkbox-row card px-4 py-2 inline-flex w-fit cursor-pointer">
-      <input type="checkbox" checked={checked} onChange={toggle} />
-      <span>🏆 Award plaque requested</span>
+    <label className="card inline-flex items-center w-fit cursor-pointer" style={{ gap: '0.625rem', padding: '0.625rem 1.125rem' }}>
+      <input type="checkbox" checked={checked} onChange={toggle} style={{ width: 16, height: 16, flexShrink: 0 }} />
+      <span className="text-sm">🏆 Award plaque requested</span>
     </label>
   )
 }

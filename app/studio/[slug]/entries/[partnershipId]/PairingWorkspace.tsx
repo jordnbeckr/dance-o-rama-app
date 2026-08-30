@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import AgeLevelPicker from './AgeLevelPicker'
 import DivisionForm from './DivisionForm'
+import CoupleEventCards from './CoupleEventCards'
 import DanceGrid from './DanceGrid'
 import SoloCard from './SoloCard'
 import FormationCard from './FormationCard'
@@ -14,6 +15,14 @@ type DivisionEntryT = { id: number; section: string; ageCategory: string; eventN
 type StudentPaid = { firstName: string; paidThursday: boolean; paidFriday: boolean; paidSaturday: boolean }
 type SoloEntryT = { entryType: string; routineName: string; danceName: string | null; instructorId: number | null }
 type FormationTeamT = { id: number; danceName: string; members: { id: number; studentId: number }[] }
+type CoupleEntryT = {
+  id: number
+  section: 'AmateurCouple' | 'Club'
+  eventName: string
+  partnerType: 'Instructor' | 'Student'
+  partnerId: number | null
+  partnerLabel: string
+}
 
 export default function PairingWorkspace({
   slug,
@@ -26,6 +35,7 @@ export default function PairingWorkspace({
   student,
   soloEntry,
   formationTeams,
+  coupleEntries,
 }: {
   slug: string
   partnershipId: number
@@ -37,6 +47,7 @@ export default function PairingWorkspace({
   student: StudentPaid
   soloEntry: SoloEntryT | null
   formationTeams: FormationTeamT[]
+  coupleEntries: CoupleEntryT[]
 }) {
   const [selectedAges, setSelectedAges] = useState<string[]>(() =>
     Array.from(new Set(danceEntries.map(e => e.ageCategory)))
@@ -61,7 +72,16 @@ export default function PairingWorkspace({
         onToggleLevel={toggleLevel}
       />
 
-      <DivisionForm slug={slug} partnershipId={partnershipId} entries={divisionEntries} student={student} />
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+        <DivisionForm slug={slug} partnershipId={partnershipId} entries={divisionEntries} student={student} />
+        <CoupleEventCards
+          slug={slug}
+          studentId={studentId}
+          instructorId={instructorId}
+          student={student}
+          entries={coupleEntries}
+        />
+      </div>
 
       <DanceGrid
         slug={slug}
