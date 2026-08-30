@@ -4,9 +4,14 @@ const { PrismaClient } = require('@prisma/client')
 import * as crypto from 'crypto'
 import * as path from 'path'
 
-const adapter = new PrismaLibSql({
-  url: 'file:' + path.resolve(__dirname, 'danceorama.db'),
-})
+const tursoUrl = process.env.TURSO_DATABASE_URL
+const tursoToken = process.env.TURSO_AUTH_TOKEN
+const resolvedUrl = tursoUrl ? tursoUrl.replace(/^libsql:\/\//, 'https://') : null
+const adapter = new PrismaLibSql(
+  resolvedUrl
+    ? { url: resolvedUrl, authToken: tursoToken }
+    : { url: 'file:' + path.resolve(__dirname, 'danceorama.db') }
+)
 const db = new PrismaClient({ adapter })
 
 function hashPassword(password: string) {
