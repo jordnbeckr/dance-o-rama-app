@@ -2,6 +2,8 @@
 
 import { DANCE_AGE_CATEGORIES, DANCE_AGE_LABELS, LEVELS } from '@/lib/divisions'
 
+type Combo = { ageCategory: string; level: string }
+
 function Chip({
   label,
   checked,
@@ -12,48 +14,108 @@ function Chip({
   onChange: () => void
 }) {
   return (
-    <label
-      className="inline-flex items-center gap-1.5 text-sm rounded-full px-3 py-1 cursor-pointer"
+    <button
+      type="button"
+      onClick={onChange}
+      className="inline-flex items-center text-sm rounded-full px-3 py-1 cursor-pointer"
       style={{
         border: `1px solid ${checked ? 'var(--accent)' : 'var(--border-dark)'}`,
-        backgroundColor: checked ? '#f6eef1' : '#fff',
+        backgroundColor: checked ? 'var(--accent)' : '#fff',
+        color: checked ? '#fff' : 'var(--text)',
+        fontWeight: checked ? 600 : 400,
       }}
     >
-      <input type="checkbox" checked={checked} onChange={onChange} style={{ width: 13, height: 13 }} />
       {label}
-    </label>
+    </button>
   )
 }
 
+function comboLabel(c: Combo) {
+  return `${DANCE_AGE_LABELS[c.ageCategory] ?? c.ageCategory} · ${c.level}`
+}
+
 export default function AgeLevelPicker({
-  selectedAges,
-  selectedLevels,
-  onToggleAge,
-  onToggleLevel,
+  currentAge,
+  currentLevel,
+  onSelectAge,
+  onSelectLevel,
+  submittedCombos,
+  onSelectCombo,
+  onSubmit,
 }: {
-  selectedAges: string[]
-  selectedLevels: string[]
-  onToggleAge: (age: string) => void
-  onToggleLevel: (level: string) => void
+  currentAge: string | null
+  currentLevel: string | null
+  onSelectAge: (age: string | null) => void
+  onSelectLevel: (level: string | null) => void
+  submittedCombos: Combo[]
+  onSelectCombo: (combo: Combo) => void
+  onSubmit: () => void
 }) {
   return (
     <div className="card p-4 space-y-3">
       <h2 className="font-bold text-base">Age Category &amp; Level</h2>
       <p className="text-xs" style={{ color: 'var(--muted)' }}>
-        Applies to the Closed/Open dance chart below — students may dance in up to two ages and two levels.
+        Pick one age and one level, check off that sheet&apos;s dances below, then Submit — this student may need
+        several sheets across different age/level combos, and each one is fully independent.
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--muted)', width: 50 }}>Age</span>
         {DANCE_AGE_CATEGORIES.map(age => (
-          <Chip key={age} label={DANCE_AGE_LABELS[age] ?? age} checked={selectedAges.includes(age)} onChange={() => onToggleAge(age)} />
+          <Chip
+            key={age}
+            label={DANCE_AGE_LABELS[age] ?? age}
+            checked={currentAge === age}
+            onChange={() => onSelectAge(currentAge === age ? null : age)}
+          />
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--muted)', width: 50 }}>Level</span>
         {LEVELS.map(level => (
-          <Chip key={level} label={level} checked={selectedLevels.includes(level)} onChange={() => onToggleLevel(level)} />
+          <Chip
+            key={level}
+            label={level}
+            checked={currentLevel === level}
+            onChange={() => onSelectLevel(currentLevel === level ? null : level)}
+          />
         ))}
       </div>
+      <div>
+        <button
+          onClick={onSubmit}
+          disabled={!currentAge || !currentLevel}
+          className="px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          style={{ backgroundColor: 'var(--accent)', borderRadius: 4 }}
+        >
+          Submit this sheet
+        </button>
+      </div>
+
+      {submittedCombos.length > 0 && (
+        <div className="pt-2" style={{ borderTop: '1px solid var(--border)' }}>
+          <p className="text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'var(--muted)' }}>
+            Submitted sheets — click to reopen and edit
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {submittedCombos.map(c => {
+              const isActive = c.ageCategory === currentAge && c.level === currentLevel
+              return (
+                <button
+                  key={`${c.ageCategory}::${c.level}`}
+                  onClick={() => onSelectCombo(c)}
+                  className="text-sm rounded-full px-3 py-1"
+                  style={{
+                    border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border-dark)'}`,
+                    backgroundColor: isActive ? '#f6eef1' : '#f5f6f8',
+                  }}
+                >
+                  {comboLabel(c)}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

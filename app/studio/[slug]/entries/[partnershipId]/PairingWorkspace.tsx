@@ -54,27 +54,23 @@ export default function PairingWorkspace({
   signatureData: string | null
   signedAt: string | null
 }) {
-  const [selectedAges, setSelectedAges] = useState<string[]>(() =>
-    Array.from(new Set(danceEntries.map(e => e.ageCategory)))
-  )
-  const [selectedLevels, setSelectedLevels] = useState<string[]>(() =>
-    Array.from(new Set(danceEntries.map(e => e.level)))
-  )
+  const [currentAge, setCurrentAge] = useState<string | null>(null)
+  const [currentLevel, setCurrentLevel] = useState<string | null>(null)
 
-  function toggleAge(age: string) {
-    setSelectedAges(prev => (prev.includes(age) ? prev.filter(a => a !== age) : [...prev, age]))
-  }
-  function toggleLevel(level: string) {
-    setSelectedLevels(prev => (prev.includes(level) ? prev.filter(l => l !== level) : [...prev, level]))
-  }
+  const submittedCombos = Array.from(
+    new Map(danceEntries.map(e => [`${e.ageCategory}::${e.level}`, { ageCategory: e.ageCategory, level: e.level }])).values()
+  )
 
   return (
     <div className="space-y-5">
       <AgeLevelPicker
-        selectedAges={selectedAges}
-        selectedLevels={selectedLevels}
-        onToggleAge={toggleAge}
-        onToggleLevel={toggleLevel}
+        currentAge={currentAge}
+        currentLevel={currentLevel}
+        onSelectAge={setCurrentAge}
+        onSelectLevel={setCurrentLevel}
+        submittedCombos={submittedCombos}
+        onSelectCombo={c => { setCurrentAge(c.ageCategory); setCurrentLevel(c.level) }}
+        onSubmit={() => { setCurrentAge(null); setCurrentLevel(null) }}
       />
 
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
@@ -94,8 +90,8 @@ export default function PairingWorkspace({
         dances={dances}
         entries={danceEntries}
         student={student}
-        selectedAges={selectedAges}
-        selectedLevels={selectedLevels}
+        currentAge={currentAge}
+        currentLevel={currentLevel}
       />
 
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>

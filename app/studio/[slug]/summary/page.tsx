@@ -19,9 +19,18 @@ import {
 } from '@/lib/divisions'
 import PaidDaysBadge from '@/components/PaidDaysBadge'
 
-type DayItem = { day: Day; node: React.ReactNode }
+type Category = 'dance' | 'division' | 'couple' | 'solo' | 'formation'
+type DayItem = { day: Day; category: Category; node: React.ReactNode }
 
-function DaySection({ day, items }: { day: Day; items: React.ReactNode[] }) {
+const CATEGORY_COLORS: Record<Category, string> = {
+  dance: 'var(--accent)',
+  division: '#7c3aed',
+  couple: '#2d5fa3',
+  solo: '#608040',
+  formation: '#92400e',
+}
+
+function DaySection({ day, items }: { day: Day; items: { category: Category; node: React.ReactNode }[] }) {
   return (
     <div className="rounded overflow-hidden break-inside-avoid" style={{ border: '1px solid var(--border)' }}>
       <div
@@ -30,9 +39,11 @@ function DaySection({ day, items }: { day: Day; items: React.ReactNode[] }) {
       >
         {day}
       </div>
-      <div className="p-2.5 text-sm space-y-1">
-        {items.map((node, i) => (
-          <div key={i}>{node}</div>
+      <div className="p-2.5 text-sm space-y-1.5">
+        {items.map((item, i) => (
+          <div key={i} style={{ borderLeft: `3px solid ${CATEGORY_COLORS[item.category]}`, paddingLeft: 8 }}>
+            {item.node}
+          </div>
         ))}
       </div>
     </div>
@@ -106,9 +117,10 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
           for (const e of p.danceEntries) {
             items.push({
               day: danceDay(e.dance.style, e.category),
+              category: 'dance',
               node: (
                 <>
-                  Individual Dance: {e.dance.name} <span className="text-xs opacity-70">({e.category})</span>
+                  {e.dance.name} <span className="text-xs opacity-70">({e.category})</span>
                   {' '}— {DANCE_AGE_LABELS[e.ageCategory] ?? AGE_LABELS[e.ageCategory] ?? e.ageCategory} · {e.level}
                   {withSuffix}
                 </>
@@ -120,9 +132,10 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
             if (!day) continue
             items.push({
               day,
+              category: 'division',
               node: (
                 <>
-                  Division: {DIVISION_SECTIONS[e.section as DivisionSectionKey]?.label ?? e.section} — {e.eventName}
+                  {DIVISION_SECTIONS[e.section as DivisionSectionKey]?.label ?? e.section} — {e.eventName}
                   {' '}<span className="text-xs opacity-70">({divisionAgeLabel(e.section as DivisionSectionKey, e.ageCategory)})</span>
                   {withSuffix}
                 </>
@@ -136,9 +149,10 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
           if (!day) continue
           items.push({
             day,
+            category: 'couple',
             node: (
               <>
-                Couple Event: {COUPLE_EVENT_SECTIONS[e.section as CoupleEventSectionKey]?.label ?? e.section} — {e.eventName}
+                {COUPLE_EVENT_SECTIONS[e.section as CoupleEventSectionKey]?.label ?? e.section} — {e.eventName}
                 {' '}with {e.partnerStudent ? `${e.partnerStudent.firstName} ${e.partnerStudent.lastName} (${e.partnerStudent.studio.name})` : `${e.partnerInstructor?.name} (${e.partnerInstructor?.studio.name}, instructor)`}
               </>
             ),
@@ -149,9 +163,10 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
           if (!day) continue
           items.push({
             day,
+            category: 'couple',
             node: (
               <>
-                Couple Event: {COUPLE_EVENT_SECTIONS[e.section as CoupleEventSectionKey]?.label ?? e.section} — {e.eventName}
+                {COUPLE_EVENT_SECTIONS[e.section as CoupleEventSectionKey]?.label ?? e.section} — {e.eventName}
                 {' '}with {e.student.firstName} {e.student.lastName} ({e.student.studio.name})
               </>
             ),
@@ -161,6 +176,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
         if (student.soloEntry) {
           items.push({
             day: SOLO_DAY,
+            category: 'solo',
             node: (
               <>
                 {student.soloEntry.entryType}{student.soloEntry.danceName && <> ({student.soloEntry.danceName})</>}: &ldquo;{student.soloEntry.routineName}&rdquo;
@@ -172,19 +188,20 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
         for (const m of student.formationMembers) {
           items.push({
             day: FORMATION_DAY,
+            category: 'formation',
             node: (
               <>
-                Formation: {m.team.name} <span className="text-xs opacity-70">({m.team.danceName})</span>
+                {m.team.name} <span className="text-xs opacity-70">({m.team.danceName})</span>
                 {m.instructor && <> &amp; {m.instructor.name}</>}
               </>
             ),
           })
         }
 
-        const byDay = new Map<Day, React.ReactNode[]>()
+        const byDay = new Map<Day, { category: Category; node: React.ReactNode }[]>()
         for (const item of items) {
           if (!byDay.has(item.day)) byDay.set(item.day, [])
-          byDay.get(item.day)!.push(item.node)
+          byDay.get(item.day)!.push({ category: item.category, node: item.node })
         }
 
         const hasAnything = items.length > 0
