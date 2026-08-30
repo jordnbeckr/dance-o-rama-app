@@ -55,12 +55,7 @@ export default function DivisionForm({
   }
 
   return (
-    <div className="card p-4 space-y-4">
-      <h2 className="font-bold text-base">Sections 2-4 — All Around, Open Bronze 3-Dance, Scholarship</h2>
-      <p className="text-xs" style={{ color: 'var(--muted)' }}>
-        Check every age/event combination that applies. Column headers show which day that event runs.
-      </p>
-
+    <div className="space-y-3">
       {error && (
         <div className="banner-error flex justify-between">
           {error}
@@ -68,29 +63,45 @@ export default function DivisionForm({
         </div>
       )}
 
-      <div className="space-y-5">
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
         {SECTION_KEYS.map(section => {
           const def = DIVISION_SECTIONS[section]
           const allSameDay = def.events.every(ev => ev.day === def.events[0].day)
+          const bg = allSameDay ? DAY_BG_COLORS[def.events[0].day] : undefined
           return (
-            <div key={section}>
+            <div key={section} className="card overflow-hidden flex flex-col" style={{ backgroundColor: bg }}>
               <div
-                className="text-xs font-bold uppercase tracking-wide px-2 py-1.5 rounded-t"
+                className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2"
                 style={{
-                  backgroundColor: allSameDay ? DAY_BG_COLORS[def.events[0].day] : '#eef0f3',
+                  backgroundColor: bg ?? '#f5f6f8',
                   color: allSameDay ? DAY_COLORS[def.events[0].day] : '#2a3545',
+                  borderBottom: '1px solid var(--border)',
                 }}
               >
-                {def.label}
-                {allSameDay && <span className="ml-2 font-normal normal-case">({def.events[0].day})</span>}
+                <span>{def.label}</span>
+                {allSameDay && (
+                  <span
+                    style={{
+                      backgroundColor: DAY_COLORS[def.events[0].day],
+                      color: '#fff',
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: 10,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {def.events[0].day}
+                  </span>
+                )}
               </div>
-              <div className="overflow-x-auto">
-                <table className="data-table" style={{ minWidth: 420 }}>
+              <div className="p-3 overflow-x-auto flex-1" style={{ backgroundColor: bg }}>
+                <table className="data-table" style={{ minWidth: 300 }}>
                   <thead>
                     <tr>
-                      <th>Age</th>
+                      <th style={{ backgroundColor: bg }}>Age</th>
                       {def.events.map(ev => (
-                        <th key={ev.name} style={{ textAlign: 'center', color: DAY_COLORS[ev.day] }}>
+                        <th key={ev.name} style={{ textAlign: 'center', color: DAY_COLORS[ev.day], backgroundColor: bg }}>
                           {ev.name}
                           {!allSameDay && <div className="font-normal normal-case" style={{ fontSize: '0.65rem' }}>{ev.day}</div>}
                         </th>
@@ -100,7 +111,7 @@ export default function DivisionForm({
                   <tbody>
                     {def.ages.map(age => (
                       <tr key={age}>
-                        <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{AGE_LABELS[age] ?? age}</td>
+                        <td style={{ fontWeight: 600, whiteSpace: 'nowrap', backgroundColor: bg }}>{AGE_LABELS[age] ?? age}</td>
                         {def.events.map(ev => {
                           const key = cellKey(section, age, ev.name)
                           const isChecked = entryLookup.has(key) !== optimisticPending.has(key)
@@ -108,7 +119,7 @@ export default function DivisionForm({
                           return (
                             <td
                               key={ev.name}
-                              style={{ textAlign: 'center', backgroundColor: allSameDay ? undefined : DAY_BG_COLORS[ev.day] }}
+                              style={{ textAlign: 'center', backgroundColor: allSameDay ? bg : DAY_BG_COLORS[ev.day] }}
                             >
                               <input
                                 type="checkbox"
