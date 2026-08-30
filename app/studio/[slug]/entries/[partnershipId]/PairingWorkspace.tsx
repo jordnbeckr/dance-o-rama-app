@@ -77,7 +77,7 @@ export default function PairingWorkspace({
         onToggleLevel={toggleLevel}
       />
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
         <DivisionForm slug={slug} partnershipId={partnershipId} entries={divisionEntries} student={student} />
         <CoupleEventCards
           slug={slug}

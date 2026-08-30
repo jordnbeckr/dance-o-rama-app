@@ -84,6 +84,28 @@ export default function DanceGrid({
     return m
   }, [entries])
 
+  // Students often dance the same heats across every age/level combo they
+  // qualify for (e.g. the same Waltz entered at both B1 and B2, Assoc and
+  // Full Silver) — this copies one group's checked dances into the others
+  // instead of re-checking the same boxes 3-4 times over.
+  function copyGroupToOthers(source: GroupKey) {
+    const sourceEntries = entries.filter(e => e.ageCategory === source.ageCategory && e.level === source.level)
+    const targets = activeGroups.filter(g => groupKeyStr(g) !== groupKeyStr(source))
+    if (sourceEntries.length === 0 || targets.length === 0) return
+    setError(null)
+    startTransition(async () => {
+      const results = await Promise.all(
+        targets.flatMap(target =>
+          sourceEntries
+            .filter(se => !entryLookup.has(entryKey(se.danceId, se.category, target.ageCategory, target.level)))
+            .map(se => addDanceEntry(slug, partnershipId, se.danceId, se.category as 'Closed' | 'Open', target.ageCategory, target.level))
+        )
+      )
+      const firstError = results.find((r): r is { error: string } => 'error' in r && !!r.error)
+      if (firstError) setError(firstError.error)
+    })
+  }
+
   function toggleDance(g: GroupKey, danceId: number, category: 'Closed' | 'Open', checked: boolean) {
     const key = entryKey(danceId, category, g.ageCategory, g.level)
     setOptimisticPending(prev => new Set(prev).add(key))
@@ -135,10 +157,18 @@ export default function DanceGrid({
           <div key={groupKeyStr(g)}>
             {activeGroups.length > 1 && (
               <div
-                className="text-xs font-semibold px-2 py-1.5 rounded-t"
+                className="text-xs font-semibold px-2 py-1.5 rounded-t flex items-center justify-between gap-2"
                 style={{ backgroundColor: '#f5f6f8' }}
               >
-                {DANCE_AGE_LABELS[g.ageCategory] ?? AGE_LABELS[g.ageCategory] ?? g.ageCategory} · {g.level}
+                <span>{DANCE_AGE_LABELS[g.ageCategory] ?? AGE_LABELS[g.ageCategory] ?? g.ageCategory} · {g.level}</span>
+                <button
+                  onClick={() => copyGroupToOthers(g)}
+                  className="font-normal normal-case"
+                  style={{ color: 'var(--accent)' }}
+                  title="Check the same dances in every other age/level group"
+                >
+                  Copy to other groups
+                </button>
               </div>
             )}
             <div className="overflow-x-auto">
