@@ -44,8 +44,6 @@ export async function setStudentPaidDay(studioSlug: string, studentId: number, d
   revalidatePath(`/studio/${studioSlug}/roster`)
   revalidatePath(`/studio/${studioSlug}/entries`)
   revalidatePath(`/studio/${studioSlug}/couples`)
-  revalidatePath(`/studio/${studioSlug}/solos`)
-  revalidatePath(`/studio/${studioSlug}/formations`)
 }
 
 // --- Instructors ---

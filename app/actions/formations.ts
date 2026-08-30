@@ -24,7 +24,7 @@ export async function createFormationTeam(
 
   try {
     const team = await db.formationTeam.create({ data: { studioId: studio.id, danceName: name } })
-    revalidatePath(`/studio/${studioSlug}/formations`)
+    revalidatePath(`/studio/${studioSlug}/entries`)
     return { teamId: team.id }
   } catch {
     return { error: 'A formation team for this dance already exists' }
@@ -36,7 +36,7 @@ export async function deleteFormationTeam(studioSlug: string, teamId: number) {
   const team = await db.formationTeam.findFirst({ where: { id: teamId, studioId: studio.id } })
   if (!team) return { error: 'Team not found' }
   await db.formationTeam.delete({ where: { id: teamId } })
-  revalidatePath(`/studio/${studioSlug}/formations`)
+  revalidatePath(`/studio/${studioSlug}/entries`)
   revalidatePath('/admin/master')
 }
 
@@ -73,7 +73,7 @@ export async function addFormationMember(
     return { error: 'That dancer is already on this team' }
   }
 
-  revalidatePath(`/studio/${studioSlug}/formations`)
+  revalidatePath(`/studio/${studioSlug}/entries`)
   revalidatePath('/admin/master')
 }
 
@@ -84,6 +84,6 @@ export async function removeFormationMember(studioSlug: string, memberId: number
   })
   if (!member) return { error: 'Member not found' }
   await db.formationMember.delete({ where: { id: memberId } })
-  revalidatePath(`/studio/${studioSlug}/formations`)
+  revalidatePath(`/studio/${studioSlug}/entries`)
   revalidatePath('/admin/master')
 }

@@ -56,7 +56,7 @@ export async function setSoloEntry(
     },
   })
 
-  revalidatePath(`/studio/${studioSlug}/solos`)
+  revalidatePath(`/studio/${studioSlug}/entries`)
   revalidatePath('/admin/master')
 }
 
@@ -65,6 +65,6 @@ export async function clearSoloEntry(studioSlug: string, studentId: number) {
   const entry = await db.soloEntry.findFirst({ where: { studentId, studioId: studio.id } })
   if (!entry) return { error: 'Entry not found' }
   await db.soloEntry.delete({ where: { studentId } })
-  revalidatePath(`/studio/${studioSlug}/solos`)
+  revalidatePath(`/studio/${studioSlug}/entries`)
   revalidatePath('/admin/master')
 }

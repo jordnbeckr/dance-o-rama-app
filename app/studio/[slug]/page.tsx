@@ -25,8 +25,8 @@ export default async function StudioDashboard({ params }: { params: Promise<{ sl
     { label: 'Dance Entries', value: danceEntryCount, href: `/studio/${slug}/entries` },
     { label: 'Division Entries', value: divisionEntryCount, href: `/studio/${slug}/entries` },
     { label: 'Couple Events', value: coupleEventCount, href: `/studio/${slug}/couples` },
-    { label: 'Solo/Show Routines', value: soloCount, href: `/studio/${slug}/solos` },
-    { label: 'Formation Teams', value: formationCount, href: `/studio/${slug}/formations` },
+    { label: 'Solo/Show Routines', value: soloCount, href: `/studio/${slug}/entries` },
+    { label: 'Formation Teams', value: formationCount, href: `/studio/${slug}/entries` },
   ]
 
   return (
@@ -44,9 +44,8 @@ export default async function StudioDashboard({ params }: { params: Promise<{ sl
         <p className="mb-2 font-semibold" style={{ color: 'var(--text)' }}>Getting started</p>
         <ol className="list-decimal list-inside space-y-1">
           <li>Add your students and instructors on the <Link href={`/studio/${slug}/roster`} className="underline">Roster</Link> page.</li>
-          <li>For each student+instructor pairing, add dances and divisions under <Link href={`/studio/${slug}/entries`} className="underline">Dance Entries</Link>.</li>
+          <li>For each student+instructor pairing, add dances and divisions under <Link href={`/studio/${slug}/entries`} className="underline">Entries</Link> &mdash; that page also covers Solo/Show routines and Formation teams.</li>
           <li>Enter Amateur Couple and Club events under <Link href={`/studio/${slug}/couples`} className="underline">Couple Events</Link> (partners can be from any studio).</li>
-          <li>Add Solo/Show routines and Formation teams as needed.</li>
           <li>Check the <Link href={`/studio/${slug}/summary`} className="underline">Summary</Link> page before the deadline to confirm everything is correct.</li>
         </ol>
       </div>
