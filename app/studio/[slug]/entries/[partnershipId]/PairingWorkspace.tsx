@@ -54,26 +54,13 @@ export default function PairingWorkspace({
   signatureData: string | null
   signedAt: string | null
 }) {
-  const [currentAge, setCurrentAge] = useState<string | null>(null)
-  const [currentLevel, setCurrentLevel] = useState<string | null>(null)
-
-  const submittedCombos = Array.from(
-    new Map(danceEntries.map(e => [`${e.ageCategory}::${e.level}`, { ageCategory: e.ageCategory, level: e.level }])).values()
-  )
+  const [pendingCombo, setPendingCombo] = useState<{ ageCategory: string; level: string } | null>(null)
 
   return (
     <div className="space-y-5">
-      <AgeLevelPicker
-        currentAge={currentAge}
-        currentLevel={currentLevel}
-        onSelectAge={setCurrentAge}
-        onSelectLevel={setCurrentLevel}
-        submittedCombos={submittedCombos}
-        onSelectCombo={c => { setCurrentAge(c.ageCategory); setCurrentLevel(c.level) }}
-        onSubmit={() => { setCurrentAge(null); setCurrentLevel(null) }}
-      />
+      <AgeLevelPicker onAddSheet={setPendingCombo} />
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+      <div className="space-y-4">
         <DivisionForm slug={slug} partnershipId={partnershipId} entries={divisionEntries} student={student} />
         <CoupleEventCards
           slug={slug}
@@ -90,8 +77,7 @@ export default function PairingWorkspace({
         dances={dances}
         entries={danceEntries}
         student={student}
-        currentAge={currentAge}
-        currentLevel={currentLevel}
+        pendingCombo={pendingCombo}
       />
 
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>

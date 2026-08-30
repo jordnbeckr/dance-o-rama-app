@@ -121,7 +121,7 @@ export async function addCoupleEventEntry(
   await clearSignaturesForStudent(studentId)
   if (partnerType === 'Student') await clearSignaturesForStudent(partnerId)
 
-  revalidatePath(`/studio/${studioSlug}/couples`)
+  revalidatePath(`/studio/${studioSlug}/entries`, 'layout')
   revalidatePath('/admin/master')
   return { success: true }
 }
@@ -142,6 +142,6 @@ export async function removeCoupleEventEntry(studioSlug: string, id: number) {
   await db.coupleEventEntry.delete({ where: { id } })
   await clearSignaturesForStudent(entry.studentId)
   if (entry.partnerStudentId) await clearSignaturesForStudent(entry.partnerStudentId)
-  revalidatePath(`/studio/${studioSlug}/couples`)
+  revalidatePath(`/studio/${studioSlug}/entries`, 'layout')
   revalidatePath('/admin/master')
 }

@@ -32,22 +32,19 @@ export default function DanceGrid({
   dances,
   entries,
   student,
-  currentAge,
-  currentLevel,
+  pendingCombo,
 }: {
   slug: string
   partnershipId: number
   dances: Dance[]
   entries: Entry[]
   student: StudentPaid
-  currentAge: string | null
-  currentLevel: string | null
+  pendingCombo: Combo | null
 }) {
   const [, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [warning, setWarning] = useState<string | null>(null)
   const [optimisticPending, setOptimisticPending] = useState<Set<string>>(new Set())
-  const [copyFrom, setCopyFrom] = useState('')
 
   // Clear transient optimistic-pending markers once fresh entries arrive.
   const entriesFingerprint = entries.map(e => e.id).sort((a, b) => a - b).join(',')
@@ -55,16 +52,23 @@ export default function DanceGrid({
     setOptimisticPending(new Set())
   }, [entriesFingerprint])
 
-  const current: Combo | null = currentAge && currentLevel ? { ageCategory: currentAge, level: currentLevel } : null
-
-  const otherCombos: Combo[] = useMemo(() => {
+  const derivedGroups: Combo[] = useMemo(() => {
     const seen = new Map<string, Combo>()
     for (const e of entries) {
       const c = { ageCategory: e.ageCategory, level: e.level }
-      if (!current || comboKeyStr(c) !== comboKeyStr(current)) seen.set(comboKeyStr(c), c)
+      seen.set(comboKeyStr(c), c)
     }
     return Array.from(seen.values())
-  }, [entries, current])
+  }, [entries])
+
+  // Every real sheet always shows — plus a blank one being started, if its
+  // combo doesn't already have entries.
+  const allGroups: Combo[] = useMemo(() => {
+    if (pendingCombo && !derivedGroups.some(g => comboKeyStr(g) === comboKeyStr(pendingCombo))) {
+      return [...derivedGroups, pendingCombo]
+    }
+    return derivedGroups
+  }, [derivedGroups, pendingCombo])
 
   const entryLookup = useMemo(() => {
     const m = new Map<string, number>()
@@ -74,23 +78,23 @@ export default function DanceGrid({
 
   // Students often dance the same heats across several of their sheets
   // (e.g. the same Waltz at both B1 and B2, Assoc and Full Silver) — this
-  // pulls another sheet's checked dances into the one being edited now,
-  // instead of re-checking the same boxes over again.
-  function copyFromCombo() {
-    if (!current || !copyFrom) return
-    const source = otherCombos.find(c => comboKeyStr(c) === copyFrom)
-    if (!source) return
+  // copies one sheet's checked dances into the others instead of
+  // re-checking the same boxes over again.
+  function copyGroupToOthers(source: Combo) {
     const sourceEntries = entries.filter(e => e.ageCategory === source.ageCategory && e.level === source.level)
+    const targets = allGroups.filter(g => comboKeyStr(g) !== comboKeyStr(source))
+    if (sourceEntries.length === 0 || targets.length === 0) return
     setError(null)
     startTransition(async () => {
       const results = await Promise.all(
-        sourceEntries
-          .filter(se => !entryLookup.has(entryKey(se.danceId, se.category, current.ageCategory, current.level)))
-          .map(se => addDanceEntry(slug, partnershipId, se.danceId, se.category as 'Closed' | 'Open', current.ageCategory, current.level))
+        targets.flatMap(target =>
+          sourceEntries
+            .filter(se => !entryLookup.has(entryKey(se.danceId, se.category, target.ageCategory, target.level)))
+            .map(se => addDanceEntry(slug, partnershipId, se.danceId, se.category as 'Closed' | 'Open', target.ageCategory, target.level))
+        )
       )
       const firstError = results.find((r): r is { error: string } => 'error' in r && !!r.error)
       if (firstError) setError(firstError.error)
-      else setCopyFrom('')
     })
   }
 
@@ -134,91 +138,87 @@ export default function DanceGrid({
         </div>
       )}
 
-      {!current ? (
+      {allGroups.length === 0 && (
         <p className="text-sm italic" style={{ color: 'var(--muted)' }}>
-          Pick an age and level above — or click a submitted sheet — to start checking off dances.
+          Pick an age and level above to start a sheet.
         </p>
-      ) : (
-        <>
-          {otherCombos.length > 0 && (
-            <div className="flex gap-2 items-end">
-              <div className="flex-1" style={{ maxWidth: 320 }}>
-                <label className="block text-xs font-medium mb-1">Copy dances from another sheet</label>
-                <select value={copyFrom} onChange={e => setCopyFrom(e.target.value)} className="field">
-                  <option value="">Select a sheet…</option>
-                  {otherCombos.map(c => (
-                    <option key={comboKeyStr(c)} value={comboKeyStr(c)}>
-                      {DANCE_AGE_LABELS[c.ageCategory] ?? c.ageCategory} · {c.level}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button
-                onClick={copyFromCombo}
-                disabled={!copyFrom}
-                className="px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                style={{ backgroundColor: 'var(--accent)', borderRadius: 4 }}
-              >
-                Copy
-              </button>
-            </div>
-          )}
+      )}
 
-          <div className="overflow-x-auto">
-            <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(4, minmax(200px, 1fr))' }}>
-              {COLUMNS.map(col => (
-                <div key={`${col.category}-${col.title}`}>
-                  <div
-                    className="text-xs font-bold uppercase tracking-wide text-white rounded px-2 py-1.5 mb-2"
-                    style={{ backgroundColor: 'var(--header)' }}
-                  >
-                    {col.title}
-                  </div>
-                  {col.styles.map(style => {
-                    const styleDances = dances.filter(d => d.style === style)
-                    if (styleDances.length === 0) return null
-                    const day: Day = danceDay(style, col.category)
-                    return (
-                      <div
-                        key={style}
-                        className="rounded p-2 mb-2"
-                        style={{ backgroundColor: DAY_BG_COLORS[day] }}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#2a3545' }}>{style}</span>
-                          <span className="text-xs font-bold" style={{ color: DAY_COLORS[day] }}>{day}</span>
+      <div className="space-y-4">
+        {allGroups.map(g => (
+          <div key={comboKeyStr(g)}>
+            {allGroups.length > 1 && (
+              <div
+                className="text-xs font-semibold px-2 py-1.5 rounded-t flex items-center justify-between gap-2"
+                style={{ backgroundColor: '#f5f6f8' }}
+              >
+                <span>{DANCE_AGE_LABELS[g.ageCategory] ?? g.ageCategory} · {g.level}</span>
+                <button
+                  onClick={() => copyGroupToOthers(g)}
+                  className="font-normal normal-case"
+                  style={{ color: 'var(--accent)' }}
+                  title="Check the same dances in every other sheet"
+                >
+                  Copy to other sheets
+                </button>
+              </div>
+            )}
+            <div className="overflow-x-auto">
+              <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(4, minmax(200px, 1fr))' }}>
+                {COLUMNS.map(col => (
+                  <div key={`${col.category}-${col.title}`}>
+                    <div
+                      className="text-xs font-bold uppercase tracking-wide text-white rounded px-2 py-1.5 mb-2"
+                      style={{ backgroundColor: 'var(--header)' }}
+                    >
+                      {col.title}
+                    </div>
+                    {col.styles.map(style => {
+                      const styleDances = dances.filter(d => d.style === style)
+                      if (styleDances.length === 0) return null
+                      const day: Day = danceDay(style, col.category)
+                      return (
+                        <div
+                          key={style}
+                          className="rounded p-2 mb-2"
+                          style={{ backgroundColor: DAY_BG_COLORS[day] }}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#2a3545' }}>{style}</span>
+                            <span className="text-xs font-bold" style={{ color: DAY_COLORS[day] }}>{day}</span>
+                          </div>
+                          {styleDances.map(dance => {
+                            const key = entryKey(dance.id, col.category, g.ageCategory, g.level)
+                            const isChecked = entryLookup.has(key) !== optimisticPending.has(key)
+                            const paid = studentHasPaidFor(student, day)
+                            return (
+                              <label
+                                key={dance.id}
+                                className="flex items-center gap-2 py-0.5 text-sm cursor-pointer"
+                                style={{ color: DAY_COLORS[day] }}
+                                title={paid ? undefined : `${student.firstName} hasn't paid for ${day}`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  disabled={!paid}
+                                  style={{ accentColor: DAY_COLORS[day], width: 15, height: 15, flexShrink: 0 }}
+                                  onChange={e => toggleDance(g, dance.id, col.category, e.target.checked)}
+                                />
+                                {dance.name}
+                              </label>
+                            )
+                          })}
                         </div>
-                        {styleDances.map(dance => {
-                          const key = entryKey(dance.id, col.category, current.ageCategory, current.level)
-                          const isChecked = entryLookup.has(key) !== optimisticPending.has(key)
-                          const paid = studentHasPaidFor(student, day)
-                          return (
-                            <label
-                              key={dance.id}
-                              className="flex items-center gap-2 py-0.5 text-sm cursor-pointer"
-                              style={{ color: DAY_COLORS[day] }}
-                              title={paid ? undefined : `${student.firstName} hasn't paid for ${day}`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                disabled={!paid}
-                                style={{ accentColor: DAY_COLORS[day], width: 15, height: 15, flexShrink: 0 }}
-                                onChange={e => toggleDance(current, dance.id, col.category, e.target.checked)}
-                              />
-                              {dance.name}
-                            </label>
-                          )
-                        })}
-                      </div>
-                    )
-                  })}
-                </div>
-              ))}
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </>
-      )}
+        ))}
+      </div>
     </div>
   )
 }

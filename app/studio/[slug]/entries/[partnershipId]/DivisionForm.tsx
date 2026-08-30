@@ -96,9 +96,9 @@ export default function DivisionForm({
         const bg = allSameDay ? DAY_BG_COLORS[def.events[0].day] : undefined
 
         return (
-          <div key={section} className="card overflow-hidden flex flex-col" style={{ backgroundColor: bg }}>
-            <div
-              className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2"
+          <details key={section} open className="card overflow-hidden" style={{ backgroundColor: bg }}>
+            <summary
+              className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2 cursor-pointer"
               style={{
                 backgroundColor: bg ?? '#f5f6f8',
                 color: allSameDay ? DAY_COLORS[def.events[0].day] : '#2a3545',
@@ -121,9 +121,9 @@ export default function DivisionForm({
                   {def.events[0].day}
                 </span>
               )}
-            </div>
-            <div className="p-3 flex-1" style={{ backgroundColor: bg }}>
-              <div className="grid gap-x-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
+            </summary>
+            <div className="p-3" style={{ backgroundColor: bg }}>
+              <div className="grid gap-x-8" style={{ gridTemplateColumns: '1fr 1fr' }}>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: 'var(--muted)' }}>Age</p>
                   {def.ages.map(age => (
@@ -145,8 +145,11 @@ export default function DivisionForm({
                     return (
                       <label
                         key={ev.name}
-                        className="flex items-center gap-1.5 py-0.5 text-sm cursor-pointer"
-                        style={{ color: allSameDay ? undefined : DAY_COLORS[ev.day] }}
+                        className="flex items-center gap-1.5 py-0.5 px-1.5 my-0.5 rounded text-sm cursor-pointer"
+                        style={{
+                          color: allSameDay ? undefined : DAY_COLORS[ev.day],
+                          backgroundColor: allSameDay ? undefined : DAY_BG_COLORS[ev.day],
+                        }}
                         title={paid ? undefined : `${student.firstName} hasn't paid for ${ev.day}`}
                       >
                         <input
@@ -164,7 +167,7 @@ export default function DivisionForm({
                 </div>
               </div>
             </div>
-          </div>
+          </details>
         )
       })}
     </>

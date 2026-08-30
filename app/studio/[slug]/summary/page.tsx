@@ -23,14 +23,30 @@ type Category = 'dance' | 'division' | 'couple' | 'solo' | 'formation'
 type DayItem = { day: Day; category: Category; node: React.ReactNode }
 
 const CATEGORY_COLORS: Record<Category, string> = {
-  dance: 'var(--accent)',
+  dance: '#7a2f4e',
   division: '#7c3aed',
   couple: '#2d5fa3',
   solo: '#608040',
   formation: '#92400e',
 }
 
+const CATEGORY_LABELS: Record<Category, string> = {
+  dance: 'Individual Dances',
+  division: 'Divisions',
+  couple: 'Couple Events',
+  solo: 'Solo / Show',
+  formation: 'Formation Teams',
+}
+
+const CATEGORY_ORDER: Category[] = ['dance', 'division', 'couple', 'solo', 'formation']
+
 function DaySection({ day, items }: { day: Day; items: { category: Category; node: React.ReactNode }[] }) {
+  const byCategory = new Map<Category, React.ReactNode[]>()
+  for (const item of items) {
+    if (!byCategory.has(item.category)) byCategory.set(item.category, [])
+    byCategory.get(item.category)!.push(item.node)
+  }
+
   return (
     <div className="rounded overflow-hidden break-inside-avoid" style={{ border: '1px solid var(--border)' }}>
       <div
@@ -39,10 +55,20 @@ function DaySection({ day, items }: { day: Day; items: { category: Category; nod
       >
         {day}
       </div>
-      <div className="p-2.5 text-sm space-y-1.5">
-        {items.map((item, i) => (
-          <div key={i} style={{ borderLeft: `3px solid ${CATEGORY_COLORS[item.category]}`, paddingLeft: 8 }}>
-            {item.node}
+      <div className="p-2.5 space-y-2">
+        {CATEGORY_ORDER.filter(cat => byCategory.has(cat)).map(cat => (
+          <div key={cat} className="rounded overflow-hidden" style={{ border: `1px solid ${CATEGORY_COLORS[cat]}55` }}>
+            <div
+              className="text-xs font-bold uppercase tracking-wide px-2 py-1"
+              style={{ backgroundColor: `${CATEGORY_COLORS[cat]}1a`, color: CATEGORY_COLORS[cat] }}
+            >
+              {CATEGORY_LABELS[cat]}
+            </div>
+            <div className="p-2 text-sm space-y-1">
+              {byCategory.get(cat)!.map((node, i) => (
+                <div key={i}>{node}</div>
+              ))}
+            </div>
           </div>
         ))}
       </div>

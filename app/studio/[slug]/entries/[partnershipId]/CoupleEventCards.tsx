@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { addCoupleEventEntry, removeCoupleEventEntry, searchPartners } from '@/app/actions/coupleEvents'
-import { COUPLE_EVENT_SECTIONS, DAY_COLORS, DAY_BG_COLORS, studentHasPaidFor } from '@/lib/divisions'
+import { COUPLE_EVENT_SECTIONS, DAY_COLORS, DAY_BG_COLORS, studentHasPaidFor, Day } from '@/lib/divisions'
 
 type StudentPaid = { firstName: string; paidThursday: boolean; paidFriday: boolean; paidSaturday: boolean }
 type CoupleEntry = {
@@ -15,7 +15,7 @@ type CoupleEntry = {
 }
 type PartnerResult = { id: number; name: string; studioName: string }
 
-function DayBadge({ day }: { day: 'Thursday' | 'Friday' | 'Saturday' }) {
+function DayBadge({ day }: { day: Day }) {
   return (
     <span
       style={{
@@ -70,6 +70,7 @@ export default function CoupleEventCards({
 
   const amDef = COUPLE_EVENT_SECTIONS.AmateurCouple
   const amEntries = entries.filter(e => e.section === 'AmateurCouple')
+  const amDaysPresent = Array.from(new Set(amDef.events.map(ev => ev.day)))
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<PartnerResult[]>([])
   const [selectedPartner, setSelectedPartner] = useState<PartnerResult | null>(null)
@@ -115,21 +116,21 @@ export default function CoupleEventCards({
   return (
     <>
       {error && (
-        <div className="banner-error flex justify-between" style={{ gridColumn: '1 / -1' }}>
+        <div className="banner-error flex justify-between">
           {error}
           <button onClick={() => setError(null)} className="font-bold">×</button>
         </div>
       )}
 
       {/* Amateur Couple Events */}
-      <div className="card overflow-hidden flex flex-col">
-        <div
-          className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2"
+      <details open className="card overflow-hidden">
+        <summary
+          className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2 cursor-pointer"
           style={{ backgroundColor: '#f5f6f8', color: '#2a3545', borderBottom: '1px solid var(--border)' }}
         >
           <span>Amateur Couple Events</span>
-        </div>
-        <div className="p-3 space-y-2 flex-1">
+        </summary>
+        <div className="p-3 space-y-2">
           <p className="text-xs" style={{ color: 'var(--muted)' }}>Student/Student couples only.</p>
 
           {amEntries.length > 0 && (
@@ -149,7 +150,7 @@ export default function CoupleEventCards({
             </div>
           )}
 
-          <div className="relative pt-1">
+          <div className="relative pt-1" style={{ maxWidth: 320 }}>
             <label className="block text-xs font-medium mb-1">Partner (search any studio)</label>
             <input
               value={selectedPartner ? `${selectedPartner.name} (${selectedPartner.studioName})` : query}
@@ -172,36 +173,41 @@ export default function CoupleEventCards({
             )}
           </div>
 
-          <div className="space-y-0.5 pt-1">
-            {amDef.events.map(ev => {
-              const paid = studentHasPaidFor(student, ev.day)
-              const checked = !!selectedPartner && amEntries.some(e => e.eventName === ev.name && e.partnerId === selectedPartner.id)
-              return (
-                <label
-                  key={ev.name}
-                  className="flex items-center gap-1.5 py-0.5 text-sm cursor-pointer"
-                  style={{ color: DAY_COLORS[ev.day], opacity: selectedPartner ? 1 : 0.5 }}
-                  title={!selectedPartner ? 'Pick a partner above first' : paid ? undefined : `${student.firstName} hasn't paid for ${ev.day}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    disabled={!selectedPartner || !paid}
-                    style={{ width: 15, height: 15, flexShrink: 0, accentColor: DAY_COLORS[ev.day] }}
-                    onChange={e => toggleAmateurCouple(ev.name, e.target.checked)}
-                  />
-                  {ev.name} <span className="text-xs opacity-70">({ev.day})</span>
-                </label>
-              )
-            })}
+          <div className="grid gap-x-8 pt-1" style={{ gridTemplateColumns: `repeat(${amDaysPresent.length}, 1fr)` }}>
+            {amDaysPresent.map(day => (
+              <div key={day}>
+                <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: 'var(--muted)' }}>{day}</p>
+                {amDef.events.filter(ev => ev.day === day).map(ev => {
+                  const paid = studentHasPaidFor(student, ev.day)
+                  const checked = !!selectedPartner && amEntries.some(e => e.eventName === ev.name && e.partnerId === selectedPartner.id)
+                  return (
+                    <label
+                      key={ev.name}
+                      className="flex items-center gap-1.5 py-0.5 px-1.5 my-0.5 rounded text-sm cursor-pointer"
+                      style={{ color: DAY_COLORS[ev.day], backgroundColor: DAY_BG_COLORS[ev.day], opacity: selectedPartner ? 1 : 0.5 }}
+                      title={!selectedPartner ? 'Pick a partner above first' : paid ? undefined : `${student.firstName} hasn't paid for ${ev.day}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={!selectedPartner || !paid}
+                        style={{ width: 15, height: 15, flexShrink: 0, accentColor: DAY_COLORS[ev.day] }}
+                        onChange={e => toggleAmateurCouple(ev.name, e.target.checked)}
+                      />
+                      {ev.name}
+                    </label>
+                  )
+                })}
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      </details>
 
       {/* Club 3-Dance Divisions */}
-      <div className="card overflow-hidden flex flex-col" style={{ backgroundColor: DAY_BG_COLORS[clubDef.events[0].day] }}>
-        <div
-          className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2"
+      <details open className="card overflow-hidden" style={{ backgroundColor: DAY_BG_COLORS[clubDef.events[0].day] }}>
+        <summary
+          className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2 cursor-pointer"
           style={{
             backgroundColor: DAY_BG_COLORS[clubDef.events[0].day],
             color: DAY_COLORS[clubDef.events[0].day],
@@ -210,33 +216,35 @@ export default function CoupleEventCards({
         >
           <span>Club 3-Dance Divisions</span>
           <DayBadge day={clubDef.events[0].day} />
-        </div>
-        <div className="p-3 space-y-0.5 flex-1" style={{ backgroundColor: DAY_BG_COLORS[clubDef.events[0].day] }}>
-          <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>
+        </summary>
+        <div className="p-3" style={{ backgroundColor: DAY_BG_COLORS[clubDef.events[0].day] }}>
+          <p className="text-xs mb-2" style={{ color: 'var(--muted)' }}>
             One combined event for all ages/levels, open category freestyle, no costumes.
           </p>
-          {clubDef.events.map(ev => {
-            const paid = studentHasPaidFor(student, ev.day)
-            const checked = clubEntries.some(e => e.eventName === ev.name && e.partnerId === instructorId)
-            return (
-              <label
-                key={ev.name}
-                className="flex items-center gap-1.5 py-0.5 text-sm cursor-pointer"
-                title={paid ? undefined : `${student.firstName} hasn't paid for ${ev.day}`}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={!paid}
-                  style={{ width: 15, height: 15, flexShrink: 0, accentColor: DAY_COLORS[ev.day] }}
-                  onChange={e => toggleClub(ev.name, e.target.checked)}
-                />
-                {ev.name}
-              </label>
-            )
-          })}
+          <div className="grid gap-x-8" style={{ gridTemplateColumns: '1fr 1fr' }}>
+            {clubDef.events.map(ev => {
+              const paid = studentHasPaidFor(student, ev.day)
+              const checked = clubEntries.some(e => e.eventName === ev.name && e.partnerId === instructorId)
+              return (
+                <label
+                  key={ev.name}
+                  className="flex items-center gap-1.5 py-0.5 text-sm cursor-pointer"
+                  title={paid ? undefined : `${student.firstName} hasn't paid for ${ev.day}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={!paid}
+                    style={{ width: 15, height: 15, flexShrink: 0, accentColor: DAY_COLORS[ev.day] }}
+                    onChange={e => toggleClub(ev.name, e.target.checked)}
+                  />
+                  {ev.name}
+                </label>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      </details>
     </>
   )
 }

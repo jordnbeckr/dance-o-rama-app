@@ -38,7 +38,6 @@ export default async function StudioLayout({
             { href: `/studio/${slug}`, label: 'Home' },
             { href: `/studio/${slug}/roster`, label: 'Roster' },
             { href: `/studio/${slug}/entries`, label: 'Entries' },
-            { href: `/studio/${slug}/couples`, label: 'Couple Events' },
             { href: `/studio/${slug}/formations`, label: 'Formations' },
             { href: `/studio/${slug}/summary`, label: 'Summary' },
           ].map(({ href, label }) => (

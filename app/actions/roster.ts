@@ -42,8 +42,7 @@ export async function setStudentPaidDay(studioSlug: string, studentId: number, d
   const field = day === 'Thursday' ? 'paidThursday' : day === 'Friday' ? 'paidFriday' : 'paidSaturday'
   await db.student.update({ where: { id: studentId }, data: { [field]: value } })
   revalidatePath(`/studio/${studioSlug}/roster`)
-  revalidatePath(`/studio/${studioSlug}/entries`)
-  revalidatePath(`/studio/${studioSlug}/couples`)
+  revalidatePath(`/studio/${studioSlug}/entries`, 'layout')
 }
 
 // --- Instructors ---
