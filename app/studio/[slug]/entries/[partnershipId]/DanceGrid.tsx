@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition, useEffect, useMemo, Fragment } from 'react'
+import { useState, useTransition, useEffect, useMemo } from 'react'
 import { addDanceEntry, removeDanceEntry } from '@/app/actions/danceEntries'
-import { AGE_CATEGORIES_5, AGE_LABELS, LEVELS, DANCE_STYLES, DAY_COLORS, studentHasPaidFor, danceDay } from '@/lib/divisions'
+import { AGE_CATEGORIES_5, AGE_LABELS, LEVELS, DAY_COLORS, DAY_BG_COLORS, studentHasPaidFor, danceDay, Day } from '@/lib/divisions'
 
 type Dance = { id: number; name: string; style: string }
 type Entry = { id: number; danceId: number; category: string; ageCategory: string; level: string }
@@ -16,6 +16,15 @@ function groupKeyStr(g: GroupKey) {
 function entryKey(danceId: number, category: string, ageCategory: string, level: string) {
   return `${danceId}::${category}::${ageCategory}::${level}`
 }
+
+// Matches the mockup's 4-column layout: each column pairs a category
+// (Closed/Open) with the two styles that share a paper-form sub-column.
+const COLUMNS: { category: 'Closed' | 'Open'; title: string; styles: string[] }[] = [
+  { category: 'Closed', title: 'Closed · American & Int’l Style', styles: ['American Style', 'International Style'] },
+  { category: 'Closed', title: 'Closed · C/W & Specialty', styles: ['Country Western', 'Specialty'] },
+  { category: 'Open', title: 'Open · American & Int’l Style', styles: ['American Style', 'International Style'] },
+  { category: 'Open', title: 'Open · C/W & Specialty', styles: ['Country Western', 'Specialty'] },
+]
 
 export default function DanceGrid({
   slug,
@@ -103,8 +112,6 @@ export default function DanceGrid({
     })
   }
 
-  const stylesInOrder = DANCE_STYLES
-
   return (
     <div className="card p-4 space-y-4">
       <h2 className="font-bold text-base">Section 1 — Individual Dances (Closed / Open Category)</h2>
@@ -187,65 +194,57 @@ export default function DanceGrid({
                 )}
               </summary>
               <div className="p-3 overflow-x-auto">
-                <table className="data-table" style={{ minWidth: 480 }}>
-                  <thead>
-                    <tr>
-                      <th>Dance</th>
-                      <th style={{ textAlign: 'center' }}>Closed</th>
-                      <th style={{ textAlign: 'center' }}>Open</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-    {stylesInOrder.map(style => {
-                      const styleDances = dances.filter(d => d.style === style)
-                      if (styleDances.length === 0) return null
-                      const closedDay = danceDay(style, 'Closed')
-                      const openDay = danceDay(style, 'Open')
-                      return (
-                        <Fragment key={style}>
-                          <tr>
-                            <td style={{ backgroundColor: '#eef0f3', fontWeight: 600, fontSize: '0.75rem' }}>
-                              {style}
-                            </td>
-                            <td style={{ backgroundColor: '#eef0f3', textAlign: 'center', fontSize: '0.68rem', fontWeight: 600, color: DAY_COLORS[closedDay] }}>
-                              {closedDay}
-                            </td>
-                            <td style={{ backgroundColor: '#eef0f3', textAlign: 'center', fontSize: '0.68rem', fontWeight: 600, color: DAY_COLORS[openDay] }}>
-                              {openDay}
-                            </td>
-                          </tr>
-                          {styleDances.map(dance => {
-                            const closedPaid = studentHasPaidFor(student, closedDay)
-                            const openPaid = studentHasPaidFor(student, openDay)
-                            return (
-                              <tr key={dance.id}>
-                                <td>{dance.name}</td>
-                                {(['Closed', 'Open'] as const).map(category => {
-                                  const day = category === 'Closed' ? closedDay : openDay
-                                  const paid = category === 'Closed' ? closedPaid : openPaid
-                                  const key = entryKey(dance.id, category, g.ageCategory, g.level)
-                                  const isChecked = entryLookup.has(key) !== optimisticPending.has(key)
-                                  return (
-                                    <td key={category} style={{ textAlign: 'center' }}>
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        disabled={!paid}
-                                        style={{ accentColor: DAY_COLORS[day] }}
-                                        title={paid ? undefined : `${student.firstName} hasn't paid for ${day}`}
-                                        onChange={e => toggleDance(g, dance.id, category, e.target.checked)}
-                                      />
-                                    </td>
-                                  )
-                                })}
-                              </tr>
-                            )
-                          })}
-                        </Fragment>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(4, minmax(200px, 1fr))' }}>
+                  {COLUMNS.map(col => (
+                    <div key={`${col.category}-${col.title}`}>
+                      <div
+                        className="text-xs font-bold uppercase tracking-wide text-white rounded px-2 py-1.5 mb-2"
+                        style={{ backgroundColor: 'var(--header)' }}
+                      >
+                        {col.title}
+                      </div>
+                      {col.styles.map(style => {
+                        const styleDances = dances.filter(d => d.style === style)
+                        if (styleDances.length === 0) return null
+                        const day: Day = danceDay(style, col.category)
+                        const paid = studentHasPaidFor(student, day)
+                        return (
+                          <div
+                            key={style}
+                            className="rounded p-2 mb-2"
+                            style={{ backgroundColor: DAY_BG_COLORS[day] }}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#2a3545' }}>{style}</span>
+                              <span className="text-xs font-bold" style={{ color: DAY_COLORS[day] }}>{day}</span>
+                            </div>
+                            {styleDances.map(dance => {
+                              const key = entryKey(dance.id, col.category, g.ageCategory, g.level)
+                              const isChecked = entryLookup.has(key) !== optimisticPending.has(key)
+                              return (
+                                <label
+                                  key={dance.id}
+                                  className="flex items-center gap-2 py-0.5 text-sm cursor-pointer"
+                                  style={{ color: DAY_COLORS[day] }}
+                                  title={paid ? undefined : `${student.firstName} hasn't paid for ${day}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    disabled={!paid}
+                                    style={{ accentColor: DAY_COLORS[day], width: 15, height: 15, flexShrink: 0 }}
+                                    onChange={e => toggleDance(g, dance.id, col.category, e.target.checked)}
+                                  />
+                                  {dance.name}
+                                </label>
+                              )
+                            })}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
               </div>
             </details>
           )

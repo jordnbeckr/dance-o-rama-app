@@ -12,6 +12,13 @@ export const DAY_COLORS: Record<Day, string> = {
   Saturday: '#b91c1c',
 }
 
+// Light tints of the above, for full-block day backgrounds.
+export const DAY_BG_COLORS: Record<Day, string> = {
+  Thursday: '#ecfdf5',
+  Friday: '#eff6ff',
+  Saturday: '#fef2f2',
+}
+
 // Solo Routines (Section 7) and Formation Teams (Section 8) each run on a
 // single fixed day — not necessarily the same day as each other.
 export const SOLO_DAY: Day = 'Thursday'
