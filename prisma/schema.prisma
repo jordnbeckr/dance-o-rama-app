@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// Core roster
+// ---------------------------------------------------------------------------
+
+model Studio {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  slug         String   @unique
+  passwordHash String
+  order        Int      @default(0)
+
+  instructors        Instructor[]
+  students           Student[]
+  partnerships       Partnership[]
+  coupleEventEntries CoupleEventEntry[]
+  soloEntries        SoloEntry[]
+  formationTeams     FormationTeam[]
+}
+
+model Instructor {
+  id       Int    @id @default(autoincrement())
+  name     String
+  studioId Int
+  studio   Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  partnerships                Partnership[]
+  coupleEventEntriesAsPartner CoupleEventEntry[] @relation("CoupleEventPartnerInstructor")
+  formationMembers            FormationMember[]
+  soloEntries                 SoloEntry[]
+
+  @@index([studioId])
+}
+
+model Student {
+  id        Int    @id @default(autoincrement())
+  firstName String
+  lastName  String
+  studioId  Int
+  studio    Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  // Which event days this student's travel package covers — the studio sets
+  // these, and every entry action hard-blocks entries on unpaid days.
+  paidThursday Boolean @default(false)
+  paidFriday   Boolean @default(false)
+  paidSaturday Boolean @default(false)
+
+  partnerships                Partnership[]
+  coupleEventEntries          CoupleEventEntry[] @relation("CoupleEventPrimaryStudent")
+  coupleEventEntriesAsPartner CoupleEventEntry[] @relation("CoupleEventPartnerStudent")
+  soloEntry                   SoloEntry?
+  formationMembers            FormationMember[]
+
+  @@index([studioId])
+}
+
+// Admin-managed lookup — the ~38 dance names on the entry form, styled and
+// orderable so admin can add/rename/reorder without a migration.
+// A dance's day depends on both style and Closed/Open category (see
+// lib/divisions.ts danceDay()) — not stored here since it's fully derived.
+model Dance {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  // style: "American Style" | "International Style" | "Country Western" | "Specialty"
+  style String
+  order Int    @default(0)
+
+  entries DanceEntry[]
+}
+
+// ---------------------------------------------------------------------------
+// Partnership = the "one sheet per student+instructor pairing" hub.
+// Sections 1-4 of the paper form all attach here. awardPlaque is per-sheet,
+// not per-dance.
+// ---------------------------------------------------------------------------
+
+model Partnership {
+  id           Int        @id @default(autoincrement())
+  studioId     Int
+  studio       Studio     @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  studentId    Int
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  instructorId Int
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  awardPlaque  Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  danceEntries    DanceEntry[]
+  divisionEntries DivisionEntry[]
+
+  @@unique([studentId, instructorId])
+  @@index([studioId])
+}
+
+// Section 1: Closed/Open category individual dances. A "group" (age+level)
+// is a read-time groupBy over these rows, not its own table.
+model DanceEntry {
+  id            Int         @id @default(autoincrement())
+  partnershipId Int
+  partnership   Partnership @relation(fields: [partnershipId], references: [id], onDelete: Cascade)
+  danceId       Int
+  dance         Dance       @relation(fields: [danceId], references: [id], onDelete: Restrict)
+  // category: "Closed" | "Open"
+  category      String
+  // ageCategory: "Junior" | "A" | "B" | "C" | "D"
+  ageCategory   String
+  // level: "Newcomer" | "Assoc Bronze" | "Full Bronze" | "Assoc Silver" |
+  //        "Full Silver" | "Associate Gold" | "Full Gold" | "Advanced Gold"
+  level         String
+  createdAt     DateTime    @default(now())
+
+  @@unique([partnershipId, danceId, category, ageCategory, level])
+  @@index([partnershipId])
+}
+
+// Sections 2 (All Around), 3 (Open Bronze 3-Dance), 4 (Scholarship)
+// consolidated: all are (partnership) x (age) x (named event). Valid
+// ageCategory/eventName combos differ PER SECTION — validated in the server
+// action / UI dropdown options, not the schema.
+model DivisionEntry {
+  id            Int         @id @default(autoincrement())
+  partnershipId Int
+  partnership   Partnership @relation(fields: [partnershipId], references: [id], onDelete: Cascade)
+  // section: "AllAround" | "OpenBronze3Dance" | "Scholarship"
+  section       String
+  // ageCategory: "Junior" | "A" | "B" | "C" | "D" (AllAround/Scholarship);
+  // "A" | "B" (OpenBronze3Dance); sentinel "AllAges" for the one ageless
+  // Scholarship event (Int'l Latin) — non-null sentinel used deliberately,
+  // since a nullable ageCategory would defeat the @@unique below (SQLite
+  // never treats two NULLs as equal).
+  ageCategory   String
+  // eventName, section-dependent:
+  //   AllAround: "Newcomer 2-Dance" | "Assoc Bronze 2-Dance" | "Full Bronze 4-Dance"
+  //     | "Assoc Silver 4-Dance" | "Full Silver 4-Dance" | "Gold & Above 4-Dance"
+  //   OpenBronze3Dance: "Bronze Smooth" | "Bronze Rhythm"
+  //   Scholarship: "American Smooth" | "Int'l Style Ballroom" | "American Rhythm"
+  //     | "Int'l Latin (Latin Scholarship)"
+  eventName     String
+  createdAt     DateTime    @default(now())
+
+  @@unique([partnershipId, section, ageCategory, eventName])
+  @@index([partnershipId])
+}
+
+// ---------------------------------------------------------------------------
+// Sections 5-6: not partnership-scoped (student-student or student-instructor,
+// flat checkbox lists, no age crossing). Partner may be from ANY studio.
+// ---------------------------------------------------------------------------
+
+model CoupleEventEntry {
+  id       Int    @id @default(autoincrement())
+  studioId Int
+  studio   Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  // Canonical "primary" side — the server action always stores the lower-ID
+  // person here regardless of which studio initiated the entry, and checks
+  // both orderings before insert, so the same pairing can't be double-entered
+  // from either participant's side.
+  studentId Int
+  student   Student @relation("CoupleEventPrimaryStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
+  // partnerType: "Instructor" | "Student". App-level rule (not DB):
+  // "AmateurCouple" requires partnerType = "Student"; "Club" allows either.
+  partnerType         String
+  partnerInstructorId Int?
+  partnerInstructor   Instructor? @relation("CoupleEventPartnerInstructor", fields: [partnerInstructorId], references: [id], onDelete: Cascade)
+  partnerStudentId    Int?
+  partnerStudent      Student?    @relation("CoupleEventPartnerStudent", fields: [partnerStudentId], references: [id], onDelete: Cascade)
+
+  // Computed, non-null `instructor:<id>` / `student:<id>` — required because
+  // SQLite unique indexes don't dedupe rows that differ only by a NULL
+  // column. Set by the server action, never user-supplied.
+  partnerKey String
+
+  // section: "AmateurCouple" | "Club"
+  section   String
+  // eventName, section-dependent:
+  //   AmateurCouple: "Closed Bronze Smooth" | "Closed Bronze Rhythm" |
+  //     "Closed Silver & Above Smooth" | "Closed Silver & Above Rhythm" |
+  //     "Open Smooth 3-Dance" | "Open Rhythm 3-Dance" | "Open Smooth" | "Open Rhythm"
+  //   Club: "Country Western" | "Latin" | "Swing" | "Argentine Tango"
+  eventName String
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, section, eventName, partnerKey])
+  @@index([studioId])
+}
+
+// Section 7: ONE per student (Solo OR Show). studentId @unique is the whole
+// enforcement mechanism.
+model SoloEntry {
+  id       Int    @id @default(autoincrement())
+  studioId Int
+  studio   Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  studentId Int     @unique
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  instructorId Int?
+  instructor   Instructor? @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+
+  // entryType: "Solo" | "Show"
+  entryType   String
+  // Dance name — used for "Show" only (e.g. "Cha Cha"); null for "Solo".
+  danceName   String?
+  // Routine/song/theme title, e.g. "Moulin Rouge".
+  routineName String
+  createdAt   DateTime @default(now())
+}
+
+// Section 8: formation team + flat member roster. Size (Small/Medium/Large)
+// is DERIVED from members.length at read time, never stored, so it can't
+// drift from the actual roster; the 4/5-6/7-8 bracket is a UI warning only.
+model FormationTeam {
+  id        Int      @id @default(autoincrement())
+  studioId  Int
+  studio    Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  danceName String
+  createdAt DateTime @default(now())
+
+  members FormationMember[]
+
+  @@unique([studioId, danceName])
+}
+
+model FormationMember {
+  id           Int           @id @default(autoincrement())
+  teamId       Int
+  team         FormationTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  studentId    Int
+  student      Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  instructorId Int?
+  instructor   Instructor?   @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+
+  @@unique([teamId, studentId])
+}
+
+// ---------------------------------------------------------------------------
+// Deadline lock — singleton, admin-adjustable.
+// ---------------------------------------------------------------------------
+
+model DanceORamaSettings {
+  id               Int      @id @default(1)
+  entryDeadline    DateTime
+  deadlineOverride Boolean  @default(false)
+}
