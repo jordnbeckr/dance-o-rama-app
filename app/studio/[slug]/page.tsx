@@ -116,7 +116,7 @@ export default async function StudioDashboard({ params }: { params: Promise<{ sl
 
   return (
     <div className="space-y-6">
-      <div style={{ background: 'linear-gradient(135deg, var(--header) 0%, #26365a 100%)', borderRadius: 8, padding: '28px 28px 44px' }}>
+      <div style={{ background: 'linear-gradient(135deg, var(--header) 0%, #26365a 100%)', borderRadius: 8, padding: '20px 24px', textAlign: 'center' }}>
         <span
           style={{
             display: 'inline-block',
@@ -128,16 +128,16 @@ export default async function StudioDashboard({ params }: { params: Promise<{ sl
             textTransform: 'uppercase',
             padding: '4px 12px',
             borderRadius: 12,
-            marginBottom: 12,
+            marginBottom: 10,
           }}
         >
           Studio Dashboard
         </span>
-        <h1 style={{ color: '#fff', fontSize: 32, fontWeight: 800, margin: 0, letterSpacing: '-0.01em' }}>{studio.name}</h1>
+        <h1 style={{ color: '#fff', fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: '-0.01em' }}>{studio.name}</h1>
         <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, margin: '6px 0 0' }}>{settings?.eventName ?? 'Dance-O-Rama'}</p>
       </div>
 
-      <div className="grid grid-cols-7 gap-3" style={{ marginTop: -28, position: 'relative', zIndex: 2 }}>
+      <div className="grid grid-cols-7 gap-3">
         {tiles.map(t => (
           <Link
             key={t.label}
@@ -169,45 +169,37 @@ export default async function StudioDashboard({ params }: { params: Promise<{ sl
         <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--muted)', marginBottom: 14 }}>
           Getting started
         </p>
-        <div className="flex" style={{ position: 'relative' }}>
+        <div className="grid grid-cols-3 gap-6">
           {steps.map((s, i) => (
-            <div
-              key={s.title}
-              style={{
-                flex: 1,
-                position: 'relative',
-                paddingLeft: i === 0 ? 0 : 18,
-                paddingRight: i === steps.length - 1 ? 0 : 18,
-              }}
-            >
-              {i < steps.length - 1 && (
+            <div key={s.title}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
                 <div
                   style={{
-                    position: 'absolute',
-                    top: 17,
-                    left: 'calc(50% + 17px)',
-                    width: 'calc(100% - 34px)',
-                    height: 2,
-                    background: 'repeating-linear-gradient(to right, var(--border-dark) 0 6px, transparent 6px 12px)',
+                    width: 34,
+                    height: 34,
+                    flexShrink: 0,
+                    borderRadius: '50%',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    fontSize: 15,
+                    background: s.color,
                   }}
-                />
-              )}
-              <div
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: '50%',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: 15,
-                  marginBottom: 12,
-                  background: s.color,
-                }}
-              >
-                {i + 1}
+                >
+                  {i + 1}
+                </div>
+                {i < steps.length - 1 && (
+                  <div
+                    style={{
+                      flex: 1,
+                      height: 2,
+                      marginLeft: 10,
+                      background: 'repeating-linear-gradient(to right, var(--border-dark) 0 6px, transparent 6px 12px)',
+                    }}
+                  />
+                )}
               </div>
               <p style={{ fontSize: '0.9rem', fontWeight: 700, margin: '0 0 4px' }}>{s.title}</p>
               <p style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>{s.body}</p>

@@ -43,7 +43,7 @@ export default async function RosterPage({ params }: { params: Promise<{ slug: s
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div style={{ background: 'linear-gradient(135deg, var(--header) 0%, #26365a 100%)', borderRadius: 8, padding: '24px 24px 36px' }}>
+      <div style={{ background: 'linear-gradient(135deg, var(--header) 0%, #26365a 100%)', borderRadius: 8, padding: '20px 24px', textAlign: 'center' }}>
         <span
           style={{
             display: 'inline-block',
@@ -55,16 +55,15 @@ export default async function RosterPage({ params }: { params: Promise<{ slug: s
             textTransform: 'uppercase',
             padding: '4px 12px',
             borderRadius: 12,
-            marginBottom: 12,
+            marginBottom: 10,
           }}
         >
           Roster
         </span>
         <h1 style={{ color: '#fff', fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: '-0.01em' }}>Students &amp; Instructors</h1>
-        <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, margin: '6px 0 0' }}>Who&apos;s dancing this Dance-O-Rama</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3" style={{ marginTop: -22, position: 'relative', zIndex: 2 }}>
+      <div className="grid grid-cols-2 gap-3">
         {tiles.map(t => (
           <div
             key={t.label}
