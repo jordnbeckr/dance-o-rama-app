@@ -25,6 +25,19 @@ export async function updateDeadline(formData: FormData) {
   revalidatePath('/', 'layout')
 }
 
+export async function updateEventName(name: string) {
+  await requireAdmin()
+  const trimmed = name.trim()
+  if (!trimmed) return { error: 'Event name required' }
+  await db.danceORamaSettings.upsert({
+    where: { id: 1 },
+    update: { eventName: trimmed },
+    create: { id: 1, entryDeadline: new Date(), eventName: trimmed },
+  })
+  revalidatePath('/admin/config')
+  revalidatePath('/', 'layout')
+}
+
 export async function setDeadlineOverride(value: boolean) {
   await requireAdmin()
   await db.danceORamaSettings.upsert({

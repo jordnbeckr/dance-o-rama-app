@@ -19,6 +19,17 @@ export const DAY_BG_COLORS: Record<Day, string> = {
   Saturday: '#fef2f2',
 }
 
+// Decorative accent palette for dashboard-style chrome (stat tiles, section
+// headers) — not day-coded, just a consistent jewel-tone set. Garnet matches
+// --accent exactly.
+export const JEWEL_TONES = {
+  garnet: '#7a2f4e',
+  emerald: '#1b6b52',
+  sapphire: '#2c4a7c',
+  amethyst: '#5b3a75',
+  topaz: '#8a6a2e',
+} as const
+
 // Solo Routines (Section 7) and Formation Teams (Section 8) each run on a
 // single fixed day — not necessarily the same day as each other.
 export const SOLO_DAY: Day = 'Thursday'

@@ -258,4 +258,6 @@ model DanceORamaSettings {
   id               Int      @id @default(1)
   entryDeadline    DateTime
   deadlineOverride Boolean  @default(false)
+  // Shown to studios on their dashboard (e.g. "Unique Dance-O-Rama 2026").
+  eventName        String   @default("Dance-O-Rama")
 }

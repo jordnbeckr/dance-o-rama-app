@@ -2,7 +2,7 @@
 
 import { addStudent, deleteStudent, addInstructor, deleteInstructor, setStudentPaidDay } from '@/app/actions/roster'
 import { useTransition, useState } from 'react'
-import { DAYS, DAY_COLORS, Day } from '@/lib/divisions'
+import { DAYS, DAY_COLORS, Day, JEWEL_TONES as JEWEL } from '@/lib/divisions'
 
 type Student = { id: number; firstName: string; lastName: string; paidThursday: boolean; paidFriday: boolean; paidSaturday: boolean }
 type Instructor = { id: number; name: string }
@@ -90,7 +90,7 @@ export default function RosterManager({
       <div className="card overflow-hidden">
         <div
           className="px-4 py-2 text-xs font-semibold uppercase tracking-wide"
-          style={{ backgroundColor: '#ebebeb', borderBottom: '1px solid var(--border)', color: '#444' }}
+          style={{ backgroundColor: `${JEWEL.garnet}1a`, borderBottom: '1px solid var(--border)', color: JEWEL.garnet }}
         >
           Students ({students.length})
         </div>
@@ -148,7 +148,7 @@ export default function RosterManager({
       <div className="card overflow-hidden">
         <div
           className="px-4 py-2 text-xs font-semibold uppercase tracking-wide"
-          style={{ backgroundColor: '#ebebeb', borderBottom: '1px solid var(--border)', color: '#444' }}
+          style={{ backgroundColor: `${JEWEL.emerald}1a`, borderBottom: '1px solid var(--border)', color: JEWEL.emerald }}
         >
           Instructors ({instructors.length})
         </div>
