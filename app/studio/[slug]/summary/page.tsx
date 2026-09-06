@@ -40,6 +40,36 @@ const CATEGORY_LABELS: Record<Category, string> = {
 
 const CATEGORY_ORDER: Category[] = ['dance', 'division', 'couple', 'solo', 'formation']
 
+type Combo = { ageCategory: string; level: string }
+
+function comboKeyStr(c: Combo) {
+  return `${c.ageCategory}::${c.level}`
+}
+function comboLabel(c: Combo) {
+  return `${DANCE_AGE_LABELS[c.ageCategory] ?? AGE_LABELS[c.ageCategory] ?? c.ageCategory} · ${c.level}`
+}
+
+function SheetCard({ combo, entries }: { combo: Combo; entries: { day: Day; node: React.ReactNode }[] }) {
+  return (
+    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: `1px solid ${CATEGORY_COLORS.dance}55` }}>
+      <div
+        className="text-xs font-bold uppercase tracking-wide px-2.5 py-1.5"
+        style={{ backgroundColor: `${CATEGORY_COLORS.dance}1a`, color: CATEGORY_COLORS.dance }}
+      >
+        {comboLabel(combo)}
+      </div>
+      <div className="p-2.5 text-sm space-y-1">
+        {entries.map((e, i) => (
+          <div key={i} className="flex items-center justify-between gap-2">
+            <span>{e.node}</span>
+            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: DAY_COLORS[e.day] }}>{e.day}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function DaySection({ day, items }: { day: Day; items: { category: Category; node: React.ReactNode }[] }) {
   const byCategory = new Map<Category, React.ReactNode[]>()
   for (const item of items) {
@@ -137,12 +167,14 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
       }) => {
         const multiplePartnerships = student.partnerships.filter(p => p.danceEntries.length > 0 || p.divisionEntries.length > 0).length > 1
         const items: DayItem[] = []
+        const sheets = new Map<string, { combo: Combo; entries: { day: Day; node: React.ReactNode }[] }>()
 
         for (const p of student.partnerships) {
           const withSuffix = multiplePartnerships ? ` — with ${p.instructor.name}` : ''
           for (const e of p.danceEntries) {
+            const day = danceDay(e.dance.style, e.category)
             items.push({
-              day: danceDay(e.dance.style, e.category),
+              day,
               category: 'dance',
               node: (
                 <>
@@ -151,6 +183,14 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
                   {withSuffix}
                 </>
               ),
+            })
+
+            const combo: Combo = { ageCategory: e.ageCategory, level: e.level }
+            const comboKey = comboKeyStr(combo)
+            if (!sheets.has(comboKey)) sheets.set(comboKey, { combo, entries: [] })
+            sheets.get(comboKey)!.entries.push({
+              day,
+              node: <>{e.dance.name} <span className="text-xs opacity-70">({e.category})</span>{withSuffix}</>,
             })
           }
           for (const e of p.divisionEntries) {
@@ -230,6 +270,8 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
           byDay.get(item.day)!.push({ category: item.category, node: item.node })
         }
 
+        const sheetList = Array.from(sheets.values()).sort((a, b) => comboLabel(a.combo).localeCompare(comboLabel(b.combo)))
+
         const hasAnything = items.length > 0
         const plaqueRequested = student.partnerships.some(p => p.awardPlaque)
 
@@ -259,11 +301,27 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
         return (
           <details key={student.id} className="card p-4 break-inside-avoid">
             {summaryLine}
-            <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+            <p className="text-xs font-bold uppercase tracking-wide mt-3" style={{ color: 'var(--muted)' }}>
+              All entries, by day
+            </p>
+            <div className="grid gap-3 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
               {DAYS.filter(day => byDay.has(day)).map(day => (
                 <DaySection key={day} day={day} items={byDay.get(day)!} />
               ))}
             </div>
+
+            {sheetList.length > 0 && (
+              <>
+                <p className="text-xs font-bold uppercase tracking-wide mt-4" style={{ color: 'var(--muted)' }}>
+                  Individual dances, by age/level sheet
+                </p>
+                <div className="grid gap-3 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+                  {sheetList.map(s => (
+                    <SheetCard key={comboKeyStr(s.combo)} combo={s.combo} entries={s.entries} />
+                  ))}
+                </div>
+              </>
+            )}
           </details>
         )
       })}
