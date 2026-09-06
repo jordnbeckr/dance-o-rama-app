@@ -11,7 +11,6 @@ import {
   coupleEventDay,
   DAYS,
   DAY_COLORS,
-  DAY_BG_COLORS,
   SOLO_DAY,
   FORMATION_DAY,
   danceDay,
@@ -21,14 +20,6 @@ import PaidDaysBadge from '@/components/PaidDaysBadge'
 
 type Category = 'dance' | 'division' | 'couple' | 'solo' | 'formation'
 type DayItem = { day: Day; category: Category; node: React.ReactNode; combo?: Combo }
-
-const CATEGORY_COLORS: Record<Category, string> = {
-  dance: '#7a2f4e',
-  division: '#7c3aed',
-  couple: '#2d5fa3',
-  solo: '#608040',
-  formation: '#92400e',
-}
 
 const CATEGORY_LABELS: Record<Category, string> = {
   dance: 'Individual Dances',
@@ -49,20 +40,73 @@ function comboLabel(c: Combo) {
   return `${DANCE_AGE_LABELS[c.ageCategory] ?? AGE_LABELS[c.ageCategory] ?? c.ageCategory} · ${c.level}`
 }
 
+// Categories are told apart by icon + label only — color is reserved for
+// days, so a division/couple/solo box never risks reading as "this is
+// Thursday" the way a green- or blue-tinted card would.
+function CategoryIcon({ category }: { category: Category }) {
+  const common = { viewBox: '0 0 20 20', style: { width: 12, height: 12, flexShrink: 0 }, fill: 'currentColor' } as const
+  switch (category) {
+    case 'dance':
+      return (
+        <svg {...common}>
+          <circle cx="6" cy="15" r="2.3" />
+          <circle cx="14" cy="12" r="2.3" />
+          <path d="M8 15V4l8-2v10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      )
+    case 'division':
+      return (
+        <svg {...common}>
+          <circle cx="10" cy="7" r="4.2" />
+          <path d="M7.3 10.8L6 18l4-2 4 2-1.3-7.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        </svg>
+      )
+    case 'couple':
+      return (
+        <svg {...common}>
+          <circle cx="7" cy="10" r="5" />
+          <circle cx="13" cy="10" r="5" opacity="0.55" />
+        </svg>
+      )
+    case 'solo':
+      return (
+        <svg {...common}>
+          <path d="M10 2l2.2 5.6 6 .4-4.6 3.9 1.6 5.8L10 14.8 4.8 17.7l1.6-5.8L1.8 8l6-.4z" />
+        </svg>
+      )
+    case 'formation':
+      return (
+        <svg {...common}>
+          <circle cx="10" cy="4.5" r="2.3" />
+          <circle cx="4.5" cy="15" r="2.3" />
+          <circle cx="15.5" cy="15" r="2.3" />
+        </svg>
+      )
+  }
+}
+
 function SheetCard({ combo, entries }: { combo: Combo; entries: { day: Day; node: React.ReactNode }[] }) {
+  const byDay = new Map<Day, React.ReactNode[]>()
+  for (const e of entries) {
+    if (!byDay.has(e.day)) byDay.set(e.day, [])
+    byDay.get(e.day)!.push(e.node)
+  }
+
   return (
-    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: `1px solid ${CATEGORY_COLORS.dance}55` }}>
+    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: '1px solid var(--border)' }}>
       <div
         className="text-xs font-bold uppercase tracking-wide px-2.5 py-1.5"
-        style={{ backgroundColor: `${CATEGORY_COLORS.dance}1a`, color: CATEGORY_COLORS.dance }}
+        style={{ backgroundColor: '#eef0f3', color: '#2a3545', borderBottom: '1px solid var(--border)' }}
       >
         {comboLabel(combo)}
       </div>
-      <div className="p-2.5 text-sm space-y-1">
-        {entries.map((e, i) => (
-          <div key={i} className="flex items-center justify-between gap-2">
-            <span>{e.node}</span>
-            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: DAY_COLORS[e.day] }}>{e.day}</span>
+      <div className="p-2.5 text-sm space-y-2">
+        {DAYS.filter(day => byDay.has(day)).map(day => (
+          <div key={day}>
+            <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: DAY_COLORS[day] }}>{day}</p>
+            <div className="space-y-0.5">
+              {byDay.get(day)!.map((node, i) => <div key={i}>{node}</div>)}
+            </div>
           </div>
         ))}
       </div>
@@ -78,14 +122,14 @@ function DaySection({ day, items }: { day: Day; items: { category: Category; nod
   }
 
   return (
-    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: `1px solid ${DAY_COLORS[day]}` }}>
+    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: '1px solid var(--border)' }}>
       <div
         className="text-sm font-extrabold uppercase px-3 py-2"
         style={{ backgroundColor: DAY_COLORS[day], color: '#fff', letterSpacing: '.07em' }}
       >
         {day}
       </div>
-      <div className="p-2.5 space-y-2" style={{ backgroundColor: DAY_BG_COLORS[day] }}>
+      <div className="p-2.5 space-y-2">
         {CATEGORY_ORDER.filter(cat => byCategory.has(cat)).map(cat => {
           const entries = byCategory.get(cat)!
           const byCombo = new Map<string, { combo: Combo; nodes: React.ReactNode[] }>()
@@ -102,14 +146,15 @@ function DaySection({ day, items }: { day: Day; items: { category: Category; nod
           const comboGroups = Array.from(byCombo.values()).sort((a, b) => comboLabel(a.combo).localeCompare(comboLabel(b.combo)))
 
           return (
-            <div key={cat} className="rounded overflow-hidden" style={{ border: `1px solid ${CATEGORY_COLORS[cat]}55` }}>
+            <div key={cat} className="rounded overflow-hidden" style={{ border: '1px solid var(--border)' }}>
               <div
-                className="text-xs font-bold uppercase tracking-wide px-2 py-1"
-                style={{ backgroundColor: `${CATEGORY_COLORS[cat]}1a`, color: CATEGORY_COLORS[cat] }}
+                className="text-xs font-bold uppercase tracking-wide px-2 py-1 flex items-center gap-1.5"
+                style={{ backgroundColor: '#eef0f3', color: '#2a3545' }}
               >
+                <CategoryIcon category={cat} />
                 {CATEGORY_LABELS[cat]}
               </div>
-              <div className="p-2 text-sm space-y-2">
+              <div className="p-2 text-sm space-y-2" style={{ backgroundColor: 'var(--card)' }}>
                 {comboGroups.map(g => (
                   <div key={comboKeyStr(g.combo)}>
                     <p className="text-xs font-semibold mb-1" style={{ color: 'var(--muted)' }}>{comboLabel(g.combo)}</p>
@@ -149,7 +194,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
             },
           },
           coupleEventEntries: {
-            include: { partnerStudent: { include: { studio: true } }, partnerInstructor: { include: { studio: true } } },
+            include: { partnerStudent: { include: { studio: true } }, partnerInstructor: true },
           },
           coupleEventEntriesAsPartner: {
             include: { student: { include: { studio: true } } },
@@ -186,7 +231,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
           danceEntries: { category: string; ageCategory: string; level: string; dance: { name: string; style: string } }[]
           divisionEntries: { section: string; ageCategory: string; eventName: string }[]
         }[]
-        coupleEventEntries: { section: string; eventName: string; partnerStudent: { firstName: string; lastName: string; studio: { name: string } } | null; partnerInstructor: { name: string; studio: { name: string } } | null }[]
+        coupleEventEntries: { section: string; eventName: string; partnerStudent: { firstName: string; lastName: string; studio: { name: string } } | null; partnerInstructor: { name: string } | null }[]
         coupleEventEntriesAsPartner: { section: string; eventName: string; student: { firstName: string; lastName: string; studio: { name: string } } }[]
         soloEntry: { entryType: string; routineName: string; danceName: string | null } | null
         formationMembers: { team: { name: string; danceName: string }; instructor: { name: string } | null }[]
@@ -245,7 +290,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
             node: (
               <>
                 {COUPLE_EVENT_SECTIONS[e.section as CoupleEventSectionKey]?.label ?? e.section} — {e.eventName}
-                {' '}with {e.partnerStudent ? `${e.partnerStudent.firstName} ${e.partnerStudent.lastName} (${e.partnerStudent.studio.name})` : `${e.partnerInstructor?.name} (${e.partnerInstructor?.studio.name}, instructor)`}
+                {' '}with {e.partnerStudent ? `${e.partnerStudent.firstName} ${e.partnerStudent.lastName} (${e.partnerStudent.studio.name})` : e.partnerInstructor?.name}
               </>
             ),
           })
