@@ -10,10 +10,15 @@ type Selection = { ages: string[]; events: string[] }
 
 const SECTION_KEYS = Object.keys(DIVISION_SECTIONS) as DivisionSectionKey[]
 
-// Same cyclical brand palette as the dashboard/roster tiles — gives every
-// collapsible section its own identity color so a glance at the collapsed
-// stack is enough to tell them apart.
-const JEWEL_CYCLE = [JEWEL_TONES.garnet, JEWEL_TONES.emerald, JEWEL_TONES.sapphire, JEWEL_TONES.amethyst, JEWEL_TONES.topaz]
+// A section that runs entirely on one day gets that day's actual color —
+// it genuinely IS that day, so there's no confusion. A section that mixes
+// days (Scholarship) gets a distinct non-day color instead, so it never
+// reads as "this one's Friday" (or Thursday) when it isn't.
+const SECTION_COLORS: Record<DivisionSectionKey, string> = {
+  AllAround: DAY_COLORS.Saturday,
+  OpenBronze3Dance: DAY_COLORS.Friday,
+  Scholarship: JEWEL_TONES.topaz,
+}
 
 function cellKey(age: string, eventName: string) {
   return `${age}::${eventName}`
@@ -94,12 +99,12 @@ export default function DivisionForm({
         </div>
       )}
 
-      {SECTION_KEYS.map((section, i) => {
+      {SECTION_KEYS.map(section => {
         const def = DIVISION_SECTIONS[section]
         const sel = selected[section]
         const allSameDay = def.events.every(ev => ev.day === def.events[0].day)
         const count = entries.filter(e => e.section === section).length
-        const color = JEWEL_CYCLE[i % JEWEL_CYCLE.length]
+        const color = SECTION_COLORS[section]
 
         return (
           <details key={section} className="card overflow-hidden">

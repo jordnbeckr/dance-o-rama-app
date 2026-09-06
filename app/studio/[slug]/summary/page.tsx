@@ -29,6 +29,19 @@ const CATEGORY_LABELS: Record<Category, string> = {
   formation: 'Formation Teams',
 }
 
+// None of these categories run on just one day (a "Divisions" box on a
+// given day might hold All-Around, Open Bronze, or Scholarship entries,
+// each with a different real day) — so they stay off red/blue/green
+// entirely, even nested inside a same-colored day header, to keep the
+// distinction between "this is Thursday" and "this is a category" clean.
+const CATEGORY_COLORS: Record<Category, string> = {
+  dance: '#7a2f4e',
+  division: '#5b3a75',
+  couple: '#8a6a2e',
+  solo: '#b45309',
+  formation: '#78350f',
+}
+
 const CATEGORY_ORDER: Category[] = ['dance', 'division', 'couple', 'solo', 'formation']
 
 type Combo = { ageCategory: string; level: string }
@@ -40,51 +53,6 @@ function comboLabel(c: Combo) {
   return `${DANCE_AGE_LABELS[c.ageCategory] ?? AGE_LABELS[c.ageCategory] ?? c.ageCategory} · ${c.level}`
 }
 
-// Categories are told apart by icon + label only — color is reserved for
-// days, so a division/couple/solo box never risks reading as "this is
-// Thursday" the way a green- or blue-tinted card would.
-function CategoryIcon({ category }: { category: Category }) {
-  const common = { viewBox: '0 0 20 20', style: { width: 12, height: 12, flexShrink: 0 }, fill: 'currentColor' } as const
-  switch (category) {
-    case 'dance':
-      return (
-        <svg {...common}>
-          <circle cx="6" cy="15" r="2.3" />
-          <circle cx="14" cy="12" r="2.3" />
-          <path d="M8 15V4l8-2v10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
-      )
-    case 'division':
-      return (
-        <svg {...common}>
-          <circle cx="10" cy="7" r="4.2" />
-          <path d="M7.3 10.8L6 18l4-2 4 2-1.3-7.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
-        </svg>
-      )
-    case 'couple':
-      return (
-        <svg {...common}>
-          <circle cx="7" cy="10" r="5" />
-          <circle cx="13" cy="10" r="5" opacity="0.55" />
-        </svg>
-      )
-    case 'solo':
-      return (
-        <svg {...common}>
-          <path d="M10 2l2.2 5.6 6 .4-4.6 3.9 1.6 5.8L10 14.8 4.8 17.7l1.6-5.8L1.8 8l6-.4z" />
-        </svg>
-      )
-    case 'formation':
-      return (
-        <svg {...common}>
-          <circle cx="10" cy="4.5" r="2.3" />
-          <circle cx="4.5" cy="15" r="2.3" />
-          <circle cx="15.5" cy="15" r="2.3" />
-        </svg>
-      )
-  }
-}
-
 function SheetCard({ combo, entries }: { combo: Combo; entries: { day: Day; node: React.ReactNode }[] }) {
   const byDay = new Map<Day, React.ReactNode[]>()
   for (const e of entries) {
@@ -93,10 +61,10 @@ function SheetCard({ combo, entries }: { combo: Combo; entries: { day: Day; node
   }
 
   return (
-    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: '1px solid var(--border)' }}>
+    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: `1px solid ${CATEGORY_COLORS.dance}55` }}>
       <div
         className="text-xs font-bold uppercase tracking-wide px-2.5 py-1.5"
-        style={{ backgroundColor: '#eef0f3', color: '#2a3545', borderBottom: '1px solid var(--border)' }}
+        style={{ backgroundColor: `${CATEGORY_COLORS.dance}1a`, color: CATEGORY_COLORS.dance }}
       >
         {comboLabel(combo)}
       </div>
@@ -146,12 +114,11 @@ function DaySection({ day, items }: { day: Day; items: { category: Category; nod
           const comboGroups = Array.from(byCombo.values()).sort((a, b) => comboLabel(a.combo).localeCompare(comboLabel(b.combo)))
 
           return (
-            <div key={cat} className="rounded overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+            <div key={cat} className="rounded overflow-hidden" style={{ border: `1px solid ${CATEGORY_COLORS[cat]}55` }}>
               <div
-                className="text-xs font-bold uppercase tracking-wide px-2 py-1 flex items-center gap-1.5"
-                style={{ backgroundColor: '#eef0f3', color: '#2a3545' }}
+                className="text-xs font-bold uppercase tracking-wide px-2 py-1"
+                style={{ backgroundColor: `${CATEGORY_COLORS[cat]}1a`, color: CATEGORY_COLORS[cat] }}
               >
-                <CategoryIcon category={cat} />
                 {CATEGORY_LABELS[cat]}
               </div>
               <div className="p-2 text-sm space-y-2" style={{ backgroundColor: 'var(--card)' }}>
