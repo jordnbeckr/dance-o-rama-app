@@ -2,7 +2,13 @@
 
 import { useState, useTransition, useEffect, useMemo } from 'react'
 import { addDanceEntry, removeDanceEntry } from '@/app/actions/danceEntries'
-import { DANCE_AGE_LABELS, DAY_COLORS, DAY_BG_COLORS, studentHasPaidFor, danceDay, Day } from '@/lib/divisions'
+import { DANCE_AGE_LABELS, DAY_COLORS, DAY_BG_COLORS, JEWEL_TONES, studentHasPaidFor, danceDay, Day } from '@/lib/divisions'
+
+// Sheet headers share one brand color (rather than cycling like the
+// Division/Couple sections above) since sheets are user-created, not a
+// fixed set of named sections — sapphire ties them to "Dance Entries" on
+// the dashboard tile of the same name.
+const SHEET_COLOR = JEWEL_TONES.sapphire
 
 type Dance = { id: number; name: string; style: string }
 type Entry = { id: number; danceId: number; category: string; ageCategory: string; level: string }
@@ -144,7 +150,7 @@ export default function DanceGrid({
         </p>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         {allGroups.map(g => {
           const isPending = !!pendingCombo && comboKeyStr(pendingCombo) === comboKeyStr(g)
           const checkedCount = entries.filter(e => e.ageCategory === g.ageCategory && e.level === g.level).length
@@ -211,27 +217,27 @@ export default function DanceGrid({
           }
 
           return (
-            <details key={comboKeyStr(g)} open={isPending}>
+            <details key={comboKeyStr(g)} open={isPending} className="rounded overflow-hidden">
               <summary
-                className="text-xs font-semibold px-2 py-1.5 rounded-t flex items-center justify-between gap-2 cursor-pointer"
-                style={{ backgroundColor: '#f5f6f8' }}
+                className="text-xs font-semibold px-2 py-1.5 flex items-center justify-between gap-2 cursor-pointer"
+                style={{ backgroundColor: SHEET_COLOR, color: '#fff' }}
               >
                 <span>
                   {DANCE_AGE_LABELS[g.ageCategory] ?? g.ageCategory} · {g.level}
-                  <span className="font-normal normal-case" style={{ color: 'var(--muted)' }}>
+                  <span className="font-normal normal-case" style={{ color: 'rgba(255,255,255,.75)' }}>
                     {' '}— {checkedCount} dance{checkedCount === 1 ? '' : 's'} checked
                   </span>
                 </span>
                 <button
                   onClick={e => { e.preventDefault(); e.stopPropagation(); copyGroupToOthers(g) }}
                   className="font-normal normal-case"
-                  style={{ color: 'var(--accent)' }}
+                  style={{ color: '#fff', textDecoration: 'underline' }}
                   title="Check the same dances in every other sheet"
                 >
                   Copy to other sheets
                 </button>
               </summary>
-              {chart}
+              <div className="pt-2">{chart}</div>
             </details>
           )
         })}

@@ -2,7 +2,12 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { addCoupleEventEntry, removeCoupleEventEntry, searchPartners } from '@/app/actions/coupleEvents'
-import { COUPLE_EVENT_SECTIONS, DAY_COLORS, DAY_BG_COLORS, studentHasPaidFor, Day } from '@/lib/divisions'
+import { COUPLE_EVENT_SECTIONS, DAY_COLORS, DAY_BG_COLORS, JEWEL_TONES, studentHasPaidFor } from '@/lib/divisions'
+
+// Continues the same cycle DivisionForm starts (3 sections there), so the
+// whole page reads as one consistent color sequence when scanned top to bottom.
+const AMATEUR_COLOR = JEWEL_TONES.amethyst
+const CLUB_COLOR = JEWEL_TONES.topaz
 
 type StudentPaid = { firstName: string; paidThursday: boolean; paidFriday: boolean; paidSaturday: boolean }
 type CoupleEntry = {
@@ -14,24 +19,6 @@ type CoupleEntry = {
   partnerLabel: string
 }
 type PartnerResult = { id: number; name: string; studioName: string }
-
-function DayBadge({ day }: { day: Day }) {
-  return (
-    <span
-      style={{
-        backgroundColor: DAY_COLORS[day],
-        color: '#fff',
-        fontSize: '0.65rem',
-        fontWeight: 700,
-        padding: '2px 8px',
-        borderRadius: 10,
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {day}
-    </span>
-  )
-}
 
 export default function CoupleEventCards({
   slug,
@@ -123,12 +110,17 @@ export default function CoupleEventCards({
       )}
 
       {/* Amateur Couple Events */}
-      <details open className="card overflow-hidden">
+      <details className="card overflow-hidden">
         <summary
           className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2 cursor-pointer"
-          style={{ backgroundColor: '#f5f6f8', color: '#2a3545', borderBottom: '1px solid var(--border)' }}
+          style={{ backgroundColor: AMATEUR_COLOR, color: '#fff' }}
         >
-          <span>Amateur Couple Events</span>
+          <span>
+            Amateur Couple Events
+            <span className="font-normal normal-case" style={{ color: 'rgba(255,255,255,.75)' }}>
+              {' '}— {amEntries.length} selected
+            </span>
+          </span>
         </summary>
         <div className="p-3 space-y-2">
           <p className="text-xs" style={{ color: 'var(--muted)' }}>Student/Student couples only.</p>
@@ -205,19 +197,32 @@ export default function CoupleEventCards({
       </details>
 
       {/* Club 3-Dance Divisions */}
-      <details open className="card overflow-hidden" style={{ backgroundColor: DAY_BG_COLORS[clubDef.events[0].day] }}>
+      <details className="card overflow-hidden">
         <summary
           className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2 cursor-pointer"
-          style={{
-            backgroundColor: DAY_BG_COLORS[clubDef.events[0].day],
-            color: DAY_COLORS[clubDef.events[0].day],
-            borderBottom: '1px solid var(--border)',
-          }}
+          style={{ backgroundColor: CLUB_COLOR, color: '#fff' }}
         >
-          <span>Club 3-Dance Divisions</span>
-          <DayBadge day={clubDef.events[0].day} />
+          <span>
+            Club 3-Dance Divisions
+            <span className="font-normal normal-case" style={{ color: 'rgba(255,255,255,.75)' }}>
+              {' '}— {clubEntries.length} selected
+            </span>
+          </span>
+          <span
+            style={{
+              backgroundColor: 'rgba(255,255,255,.24)',
+              color: '#fff',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: 10,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {clubDef.events[0].day}
+          </span>
         </summary>
-        <div className="p-3" style={{ backgroundColor: DAY_BG_COLORS[clubDef.events[0].day] }}>
+        <div className="p-3">
           <p className="text-xs mb-2" style={{ color: 'var(--muted)' }}>
             One combined event for all ages/levels, open category freestyle, no costumes.
           </p>

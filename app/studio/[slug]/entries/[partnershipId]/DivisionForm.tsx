@@ -2,13 +2,18 @@
 
 import { useState, useTransition } from 'react'
 import { addDivisionEntry, removeDivisionEntry } from '@/app/actions/divisionEntries'
-import { DIVISION_SECTIONS, DivisionSectionKey, divisionAgeLabel, DAY_COLORS, DAY_BG_COLORS, studentHasPaidFor } from '@/lib/divisions'
+import { DIVISION_SECTIONS, DivisionSectionKey, divisionAgeLabel, DAY_COLORS, DAY_BG_COLORS, JEWEL_TONES, studentHasPaidFor } from '@/lib/divisions'
 
 type Entry = { id: number; section: string; ageCategory: string; eventName: string }
 type StudentPaid = { firstName: string; paidThursday: boolean; paidFriday: boolean; paidSaturday: boolean }
 type Selection = { ages: string[]; events: string[] }
 
 const SECTION_KEYS = Object.keys(DIVISION_SECTIONS) as DivisionSectionKey[]
+
+// Same cyclical brand palette as the dashboard/roster tiles — gives every
+// collapsible section its own identity color so a glance at the collapsed
+// stack is enough to tell them apart.
+const JEWEL_CYCLE = [JEWEL_TONES.garnet, JEWEL_TONES.emerald, JEWEL_TONES.sapphire, JEWEL_TONES.amethyst, JEWEL_TONES.topaz]
 
 function cellKey(age: string, eventName: string) {
   return `${age}::${eventName}`
@@ -89,27 +94,32 @@ export default function DivisionForm({
         </div>
       )}
 
-      {SECTION_KEYS.map(section => {
+      {SECTION_KEYS.map((section, i) => {
         const def = DIVISION_SECTIONS[section]
         const sel = selected[section]
         const allSameDay = def.events.every(ev => ev.day === def.events[0].day)
-        const bg = allSameDay ? DAY_BG_COLORS[def.events[0].day] : undefined
+        const count = entries.filter(e => e.section === section).length
+        const color = JEWEL_CYCLE[i % JEWEL_CYCLE.length]
 
         return (
-          <details key={section} open className="card overflow-hidden" style={{ backgroundColor: bg }}>
+          <details key={section} className="card overflow-hidden">
             <summary
               className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2 cursor-pointer"
-              style={{
-                backgroundColor: bg ?? '#f5f6f8',
-                color: allSameDay ? DAY_COLORS[def.events[0].day] : '#2a3545',
-                borderBottom: '1px solid var(--border)',
-              }}
+              style={{ backgroundColor: color, color: '#fff' }}
             >
-              <span>{def.label}</span>
+              <span>
+                {def.label}
+                <span
+                  className="font-normal normal-case"
+                  style={{ color: 'rgba(255,255,255,.75)' }}
+                >
+                  {' '}— {count} selected
+                </span>
+              </span>
               {allSameDay && (
                 <span
                   style={{
-                    backgroundColor: DAY_COLORS[def.events[0].day],
+                    backgroundColor: 'rgba(255,255,255,.24)',
                     color: '#fff',
                     fontSize: '0.65rem',
                     fontWeight: 700,
@@ -122,7 +132,7 @@ export default function DivisionForm({
                 </span>
               )}
             </summary>
-            <div className="p-3" style={{ backgroundColor: bg }}>
+            <div className="p-3">
               <div className="grid gap-x-8" style={{ gridTemplateColumns: '1fr 1fr' }}>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: 'var(--muted)' }}>Age</p>

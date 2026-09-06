@@ -60,7 +60,7 @@ export default function PairingWorkspace({
     <div className="space-y-5">
       <AgeLevelPicker onAddSheet={setPendingCombo} />
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         <DivisionForm slug={slug} partnershipId={partnershipId} entries={divisionEntries} student={student} />
         <CoupleEventCards
           slug={slug}
