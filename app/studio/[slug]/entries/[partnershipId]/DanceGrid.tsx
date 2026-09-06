@@ -208,26 +208,16 @@ export default function DanceGrid({
                 {' '}— {checkedCount} dance{checkedCount === 1 ? '' : 's'} checked
               </span>
             </span>
-            <div className="flex items-center gap-3">
-              {derivedGroups.length > 1 && (
-                <button
-                  onClick={() => copyGroupToOthers(activeCombo)}
-                  className="font-normal normal-case"
-                  style={{ color: '#fff', textDecoration: 'underline' }}
-                  title="Check the same dances in every other sheet"
-                >
-                  Copy to other sheets
-                </button>
-              )}
+            {derivedGroups.length > 1 && (
               <button
-                onClick={() => setActiveKey(null)}
-                className="font-semibold normal-case"
-                style={{ color: '#fff' }}
-                title="Collapse this sheet back to a record"
+                onClick={() => copyGroupToOthers(activeCombo)}
+                className="font-normal normal-case"
+                style={{ color: '#fff', textDecoration: 'underline' }}
+                title="Check the same dances in every other sheet"
               >
-                Done ✕
+                Copy to other sheets
               </button>
-            </div>
+            )}
           </div>
 
           <div className="overflow-x-auto pt-2">
@@ -282,6 +272,22 @@ export default function DanceGrid({
                 </div>
               ))}
             </div>
+          </div>
+
+          <div
+            className="flex items-center justify-between gap-3 px-3 py-2.5 flex-wrap"
+            style={{ backgroundColor: `${SHEET_COLOR}0f`, borderTop: `1px solid ${SHEET_COLOR}33` }}
+          >
+            <p className="text-xs" style={{ color: 'var(--muted)' }}>
+              Checked dances save instantly — click Save &amp; Close when you&apos;re done with this sheet.
+            </p>
+            <button
+              onClick={() => setActiveKey(null)}
+              className="px-4 py-2 text-sm font-bold text-white rounded flex-shrink-0"
+              style={{ backgroundColor: SHEET_COLOR }}
+            >
+              ✓ Save &amp; Close Sheet
+            </button>
           </div>
         </div>
       )}
