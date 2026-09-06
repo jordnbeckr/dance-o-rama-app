@@ -78,14 +78,14 @@ function DaySection({ day, items }: { day: Day; items: { category: Category; nod
   }
 
   return (
-    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: '1px solid var(--border)' }}>
+    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: `1px solid ${DAY_COLORS[day]}` }}>
       <div
-        className="text-xs font-bold uppercase tracking-wide px-2.5 py-1.5"
-        style={{ backgroundColor: DAY_BG_COLORS[day], color: DAY_COLORS[day], borderBottom: '1px solid var(--border)' }}
+        className="text-sm font-extrabold uppercase px-3 py-2"
+        style={{ backgroundColor: DAY_COLORS[day], color: '#fff', letterSpacing: '.07em' }}
       >
         {day}
       </div>
-      <div className="p-2.5 space-y-2">
+      <div className="p-2.5 space-y-2" style={{ backgroundColor: DAY_BG_COLORS[day] }}>
         {CATEGORY_ORDER.filter(cat => byCategory.has(cat)).map(cat => {
           const entries = byCategory.get(cat)!
           const byCombo = new Map<string, { combo: Combo; nodes: React.ReactNode[] }>()

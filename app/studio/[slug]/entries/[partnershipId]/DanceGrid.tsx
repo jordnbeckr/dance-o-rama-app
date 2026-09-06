@@ -4,10 +4,10 @@ import { useState, useTransition, useEffect, useMemo } from 'react'
 import { addDanceEntry, removeDanceEntry } from '@/app/actions/danceEntries'
 import { DANCE_AGE_LABELS, DAY_COLORS, DAY_BG_COLORS, JEWEL_TONES, studentHasPaidFor, danceDay, Day } from '@/lib/divisions'
 
-// Sheet headers share one brand color (rather than cycling like the
-// Division/Couple sections above) since sheets are user-created, not a
-// fixed set of named sections — sapphire ties them to "Dance Entries" on
-// the dashboard tile of the same name.
+// Sheet chrome shares one brand color (rather than cycling like the
+// Division/Couple sections) since sheets are user-created, not a fixed set
+// of named sections — sapphire ties them to "Dance Entries" on the
+// dashboard tile of the same name.
 const SHEET_COLOR = JEWEL_TONES.sapphire
 
 type Dance = { id: number; name: string; style: string }
@@ -17,6 +17,10 @@ type Combo = { ageCategory: string; level: string }
 
 function comboKeyStr(c: Combo) {
   return `${c.ageCategory}::${c.level}`
+}
+
+function comboLabel(c: Combo) {
+  return `${DANCE_AGE_LABELS[c.ageCategory] ?? c.ageCategory} · ${c.level}`
 }
 
 function entryKey(danceId: number, category: string, ageCategory: string, level: string) {
@@ -52,11 +56,22 @@ export default function DanceGrid({
   const [warning, setWarning] = useState<string | null>(null)
   const [optimisticPending, setOptimisticPending] = useState<Set<string>>(new Set())
 
+  // The one sheet currently open for editing. Starts (and, once closed,
+  // returns to) null so the page never opens on a stale sheet from a
+  // previous visit — existing sheets live as clickable records below until
+  // picked back open.
+  const [activeKey, setActiveKey] = useState<string | null>(null)
+
   // Clear transient optimistic-pending markers once fresh entries arrive.
   const entriesFingerprint = entries.map(e => e.id).sort((a, b) => a - b).join(',')
   useEffect(() => {
     setOptimisticPending(new Set())
   }, [entriesFingerprint])
+
+  // Picking a new age/level up in AgeLevelPicker opens it here immediately.
+  useEffect(() => {
+    if (pendingCombo) setActiveKey(comboKeyStr(pendingCombo))
+  }, [pendingCombo])
 
   const derivedGroups: Combo[] = useMemo(() => {
     const seen = new Map<string, Combo>()
@@ -67,14 +82,13 @@ export default function DanceGrid({
     return Array.from(seen.values())
   }, [entries])
 
-  // Every real sheet always shows — plus a blank one being started, if its
-  // combo doesn't already have entries.
-  const allGroups: Combo[] = useMemo(() => {
-    if (pendingCombo && !derivedGroups.some(g => comboKeyStr(g) === comboKeyStr(pendingCombo))) {
-      return [...derivedGroups, pendingCombo]
-    }
-    return derivedGroups
-  }, [derivedGroups, pendingCombo])
+  const activeCombo: Combo | null = useMemo(() => {
+    if (!activeKey) return null
+    const existing = derivedGroups.find(g => comboKeyStr(g) === activeKey)
+    if (existing) return existing
+    if (pendingCombo && comboKeyStr(pendingCombo) === activeKey) return pendingCombo
+    return null
+  }, [activeKey, derivedGroups, pendingCombo])
 
   const entryLookup = useMemo(() => {
     const m = new Map<string, number>()
@@ -88,7 +102,7 @@ export default function DanceGrid({
   // re-checking the same boxes over again.
   function copyGroupToOthers(source: Combo) {
     const sourceEntries = entries.filter(e => e.ageCategory === source.ageCategory && e.level === source.level)
-    const targets = allGroups.filter(g => comboKeyStr(g) !== comboKeyStr(source))
+    const targets = derivedGroups.filter(g => comboKeyStr(g) !== comboKeyStr(source))
     if (sourceEntries.length === 0 || targets.length === 0) return
     setError(null)
     startTransition(async () => {
@@ -124,12 +138,18 @@ export default function DanceGrid({
     })
   }
 
+  const checkedCount = activeCombo
+    ? entries.filter(e => e.ageCategory === activeCombo.ageCategory && e.level === activeCombo.level).length
+    : 0
+
   return (
-    <div className="card p-4 space-y-4">
-      <h2 className="font-bold text-base">Closed Category · Open Category</h2>
-      <p className="text-xs" style={{ color: 'var(--muted)' }}>
-        {`Dances are disabled if ${student.firstName} hasn't paid for that day. Each style is tinted to the day it runs.`}
-      </p>
+    <div className="card p-4 space-y-3">
+      <div>
+        <h2 className="font-bold text-base">Individual Dances</h2>
+        <p className="text-xs" style={{ color: 'var(--muted)' }}>
+          {`Dances are disabled if ${student.firstName} hasn't paid for that day. Each style is tinted to the day it runs.`}
+        </p>
+      </div>
 
       {error && (
         <div className="banner-error flex justify-between">
@@ -144,104 +164,127 @@ export default function DanceGrid({
         </div>
       )}
 
-      {allGroups.length === 0 && (
+      {derivedGroups.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {derivedGroups.map(g => {
+            const key = comboKeyStr(g)
+            const count = entries.filter(e => e.ageCategory === g.ageCategory && e.level === g.level).length
+            const isActive = key === activeKey
+            return (
+              <button
+                key={key}
+                onClick={() => setActiveKey(isActive ? null : key)}
+                className="text-xs font-semibold px-2.5 py-1.5 rounded-full cursor-pointer"
+                style={{
+                  backgroundColor: isActive ? SHEET_COLOR : `${SHEET_COLOR}18`,
+                  color: isActive ? '#fff' : SHEET_COLOR,
+                  border: `1.5px solid ${SHEET_COLOR}`,
+                }}
+              >
+                {comboLabel(g)} — {count} dance{count === 1 ? '' : 's'}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {!activeCombo && (
         <p className="text-sm italic" style={{ color: 'var(--muted)' }}>
-          Pick an age and level above to start a sheet.
+          {derivedGroups.length > 0
+            ? 'Pick an age and level above to start a new sheet, or click a sheet above to open it.'
+            : 'Pick an age and level above to start a sheet.'}
         </p>
       )}
 
-      <div className="space-y-2">
-        {allGroups.map(g => {
-          const isPending = !!pendingCombo && comboKeyStr(pendingCombo) === comboKeyStr(g)
-          const checkedCount = entries.filter(e => e.ageCategory === g.ageCategory && e.level === g.level).length
-          const single = allGroups.length === 1
-
-          const chart = (
-            <div className="overflow-x-auto">
-              <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(4, minmax(200px, 1fr))' }}>
-                {COLUMNS.map(col => (
-                  <div key={`${col.category}-${col.title}`}>
-                    <div
-                      className="text-xs font-bold uppercase tracking-wide text-white rounded px-2 py-1.5 mb-2"
-                      style={{ backgroundColor: 'var(--header)' }}
-                    >
-                      {col.title}
-                    </div>
-                    {col.styles.map(style => {
-                      const styleDances = dances.filter(d => d.style === style)
-                      if (styleDances.length === 0) return null
-                      const day: Day = danceDay(style, col.category)
-                      return (
-                        <div
-                          key={style}
-                          className="rounded p-2 mb-2"
-                          style={{ backgroundColor: DAY_BG_COLORS[day] }}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#2a3545' }}>{style}</span>
-                            <span className="text-xs font-bold" style={{ color: DAY_COLORS[day] }}>{day}</span>
-                          </div>
-                          {styleDances.map(dance => {
-                            const key = entryKey(dance.id, col.category, g.ageCategory, g.level)
-                            const isChecked = entryLookup.has(key) !== optimisticPending.has(key)
-                            const paid = studentHasPaidFor(student, day)
-                            return (
-                              <label
-                                key={dance.id}
-                                className="flex items-center gap-2 py-0.5 text-sm cursor-pointer"
-                                style={{ color: DAY_COLORS[day] }}
-                                title={paid ? undefined : `${student.firstName} hasn't paid for ${day}`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  disabled={!paid}
-                                  style={{ accentColor: DAY_COLORS[day], width: 15, height: 15, flexShrink: 0 }}
-                                  onChange={e => toggleDance(g, dance.id, col.category, e.target.checked)}
-                                />
-                                {dance.name}
-                              </label>
-                            )
-                          })}
-                        </div>
-                      )
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-
-          if (single) {
-            return <div key={comboKeyStr(g)}>{chart}</div>
-          }
-
-          return (
-            <details key={comboKeyStr(g)} open={isPending} className="rounded overflow-hidden">
-              <summary
-                className="text-xs font-semibold px-2 py-1.5 flex items-center justify-between gap-2 cursor-pointer"
-                style={{ backgroundColor: SHEET_COLOR, color: '#fff' }}
-              >
-                <span>
-                  {DANCE_AGE_LABELS[g.ageCategory] ?? g.ageCategory} · {g.level}
-                  <span className="font-normal normal-case" style={{ color: 'rgba(255,255,255,.75)' }}>
-                    {' '}— {checkedCount} dance{checkedCount === 1 ? '' : 's'} checked
-                  </span>
-                </span>
+      {activeCombo && (
+        <div className="rounded overflow-hidden">
+          <div
+            className="text-xs font-semibold px-2.5 py-1.5 flex items-center justify-between gap-2 flex-wrap"
+            style={{ backgroundColor: SHEET_COLOR, color: '#fff' }}
+          >
+            <span>
+              {comboLabel(activeCombo)}
+              <span className="font-normal normal-case" style={{ color: 'rgba(255,255,255,.75)' }}>
+                {' '}— {checkedCount} dance{checkedCount === 1 ? '' : 's'} checked
+              </span>
+            </span>
+            <div className="flex items-center gap-3">
+              {derivedGroups.length > 1 && (
                 <button
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); copyGroupToOthers(g) }}
+                  onClick={() => copyGroupToOthers(activeCombo)}
                   className="font-normal normal-case"
                   style={{ color: '#fff', textDecoration: 'underline' }}
                   title="Check the same dances in every other sheet"
                 >
                   Copy to other sheets
                 </button>
-              </summary>
-              <div className="pt-2">{chart}</div>
-            </details>
-          )
-        })}
-      </div>
+              )}
+              <button
+                onClick={() => setActiveKey(null)}
+                className="font-semibold normal-case"
+                style={{ color: '#fff' }}
+                title="Collapse this sheet back to a record"
+              >
+                Done ✕
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto pt-2">
+            <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(4, minmax(200px, 1fr))' }}>
+              {COLUMNS.map(col => (
+                <div key={`${col.category}-${col.title}`}>
+                  <div
+                    className="text-xs font-bold uppercase tracking-wide text-white rounded px-2 py-1.5 mb-2"
+                    style={{ backgroundColor: 'var(--header)' }}
+                  >
+                    {col.title}
+                  </div>
+                  {col.styles.map(style => {
+                    const styleDances = dances.filter(d => d.style === style)
+                    if (styleDances.length === 0) return null
+                    const day: Day = danceDay(style, col.category)
+                    return (
+                      <div
+                        key={style}
+                        className="rounded p-2 mb-2"
+                        style={{ backgroundColor: DAY_BG_COLORS[day] }}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#2a3545' }}>{style}</span>
+                          <span className="text-xs font-bold" style={{ color: DAY_COLORS[day] }}>{day}</span>
+                        </div>
+                        {styleDances.map(dance => {
+                          const key = entryKey(dance.id, col.category, activeCombo.ageCategory, activeCombo.level)
+                          const isChecked = entryLookup.has(key) !== optimisticPending.has(key)
+                          const paid = studentHasPaidFor(student, day)
+                          return (
+                            <label
+                              key={dance.id}
+                              className="flex items-center gap-2 py-0.5 text-sm cursor-pointer"
+                              style={{ color: DAY_COLORS[day] }}
+                              title={paid ? undefined : `${student.firstName} hasn't paid for ${day}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                disabled={!paid}
+                                style={{ accentColor: DAY_COLORS[day], width: 15, height: 15, flexShrink: 0 }}
+                                onChange={e => toggleDance(activeCombo, dance.id, col.category, e.target.checked)}
+                              />
+                              {dance.name}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

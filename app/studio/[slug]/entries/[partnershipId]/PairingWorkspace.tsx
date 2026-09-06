@@ -60,6 +60,15 @@ export default function PairingWorkspace({
     <div className="space-y-5">
       <AgeLevelPicker onAddSheet={setPendingCombo} />
 
+      <DanceGrid
+        slug={slug}
+        partnershipId={partnershipId}
+        dances={dances}
+        entries={danceEntries}
+        student={student}
+        pendingCombo={pendingCombo}
+      />
+
       <div className="space-y-2">
         <DivisionForm slug={slug} partnershipId={partnershipId} entries={divisionEntries} student={student} />
         <CoupleEventCards
@@ -70,15 +79,6 @@ export default function PairingWorkspace({
           entries={coupleEntries}
         />
       </div>
-
-      <DanceGrid
-        slug={slug}
-        partnershipId={partnershipId}
-        dances={dances}
-        entries={danceEntries}
-        student={student}
-        pendingCombo={pendingCombo}
-      />
 
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
         <SoloCard
