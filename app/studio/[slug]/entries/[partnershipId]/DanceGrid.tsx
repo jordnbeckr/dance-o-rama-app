@@ -145,24 +145,12 @@ export default function DanceGrid({
       )}
 
       <div className="space-y-4">
-        {allGroups.map(g => (
-          <div key={comboKeyStr(g)}>
-            {allGroups.length > 1 && (
-              <div
-                className="text-xs font-semibold px-2 py-1.5 rounded-t flex items-center justify-between gap-2"
-                style={{ backgroundColor: '#f5f6f8' }}
-              >
-                <span>{DANCE_AGE_LABELS[g.ageCategory] ?? g.ageCategory} · {g.level}</span>
-                <button
-                  onClick={() => copyGroupToOthers(g)}
-                  className="font-normal normal-case"
-                  style={{ color: 'var(--accent)' }}
-                  title="Check the same dances in every other sheet"
-                >
-                  Copy to other sheets
-                </button>
-              </div>
-            )}
+        {allGroups.map(g => {
+          const isPending = !!pendingCombo && comboKeyStr(pendingCombo) === comboKeyStr(g)
+          const checkedCount = entries.filter(e => e.ageCategory === g.ageCategory && e.level === g.level).length
+          const single = allGroups.length === 1
+
+          const chart = (
             <div className="overflow-x-auto">
               <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(4, minmax(200px, 1fr))' }}>
                 {COLUMNS.map(col => (
@@ -216,8 +204,37 @@ export default function DanceGrid({
                 ))}
               </div>
             </div>
-          </div>
-        ))}
+          )
+
+          if (single) {
+            return <div key={comboKeyStr(g)}>{chart}</div>
+          }
+
+          return (
+            <details key={comboKeyStr(g)} open={isPending}>
+              <summary
+                className="text-xs font-semibold px-2 py-1.5 rounded-t flex items-center justify-between gap-2 cursor-pointer"
+                style={{ backgroundColor: '#f5f6f8' }}
+              >
+                <span>
+                  {DANCE_AGE_LABELS[g.ageCategory] ?? g.ageCategory} · {g.level}
+                  <span className="font-normal normal-case" style={{ color: 'var(--muted)' }}>
+                    {' '}— {checkedCount} dance{checkedCount === 1 ? '' : 's'} checked
+                  </span>
+                </span>
+                <button
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); copyGroupToOthers(g) }}
+                  className="font-normal normal-case"
+                  style={{ color: 'var(--accent)' }}
+                  title="Check the same dances in every other sheet"
+                >
+                  Copy to other sheets
+                </button>
+              </summary>
+              {chart}
+            </details>
+          )
+        })}
       </div>
     </div>
   )
