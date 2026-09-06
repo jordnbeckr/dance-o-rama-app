@@ -20,7 +20,7 @@ import {
 import PaidDaysBadge from '@/components/PaidDaysBadge'
 
 type Category = 'dance' | 'division' | 'couple' | 'solo' | 'formation'
-type DayItem = { day: Day; category: Category; node: React.ReactNode }
+type DayItem = { day: Day; category: Category; node: React.ReactNode; combo?: Combo }
 
 const CATEGORY_COLORS: Record<Category, string> = {
   dance: '#7a2f4e',
@@ -70,11 +70,11 @@ function SheetCard({ combo, entries }: { combo: Combo; entries: { day: Day; node
   )
 }
 
-function DaySection({ day, items }: { day: Day; items: { category: Category; node: React.ReactNode }[] }) {
-  const byCategory = new Map<Category, React.ReactNode[]>()
+function DaySection({ day, items }: { day: Day; items: { category: Category; node: React.ReactNode; combo?: Combo }[] }) {
+  const byCategory = new Map<Category, { node: React.ReactNode; combo?: Combo }[]>()
   for (const item of items) {
     if (!byCategory.has(item.category)) byCategory.set(item.category, [])
-    byCategory.get(item.category)!.push(item.node)
+    byCategory.get(item.category)!.push({ node: item.node, combo: item.combo })
   }
 
   return (
@@ -86,21 +86,47 @@ function DaySection({ day, items }: { day: Day; items: { category: Category; nod
         {day}
       </div>
       <div className="p-2.5 space-y-2">
-        {CATEGORY_ORDER.filter(cat => byCategory.has(cat)).map(cat => (
-          <div key={cat} className="rounded overflow-hidden" style={{ border: `1px solid ${CATEGORY_COLORS[cat]}55` }}>
-            <div
-              className="text-xs font-bold uppercase tracking-wide px-2 py-1"
-              style={{ backgroundColor: `${CATEGORY_COLORS[cat]}1a`, color: CATEGORY_COLORS[cat] }}
-            >
-              {CATEGORY_LABELS[cat]}
+        {CATEGORY_ORDER.filter(cat => byCategory.has(cat)).map(cat => {
+          const entries = byCategory.get(cat)!
+          const byCombo = new Map<string, { combo: Combo; nodes: React.ReactNode[] }>()
+          const uncategorized: React.ReactNode[] = []
+          for (const e of entries) {
+            if (e.combo) {
+              const key = comboKeyStr(e.combo)
+              if (!byCombo.has(key)) byCombo.set(key, { combo: e.combo, nodes: [] })
+              byCombo.get(key)!.nodes.push(e.node)
+            } else {
+              uncategorized.push(e.node)
+            }
+          }
+          const comboGroups = Array.from(byCombo.values()).sort((a, b) => comboLabel(a.combo).localeCompare(comboLabel(b.combo)))
+
+          return (
+            <div key={cat} className="rounded overflow-hidden" style={{ border: `1px solid ${CATEGORY_COLORS[cat]}55` }}>
+              <div
+                className="text-xs font-bold uppercase tracking-wide px-2 py-1"
+                style={{ backgroundColor: `${CATEGORY_COLORS[cat]}1a`, color: CATEGORY_COLORS[cat] }}
+              >
+                {CATEGORY_LABELS[cat]}
+              </div>
+              <div className="p-2 text-sm space-y-2">
+                {comboGroups.map(g => (
+                  <div key={comboKeyStr(g.combo)}>
+                    <p className="text-xs font-semibold mb-1" style={{ color: 'var(--muted)' }}>{comboLabel(g.combo)}</p>
+                    <div className="space-y-1">
+                      {g.nodes.map((node, i) => <div key={i}>{node}</div>)}
+                    </div>
+                  </div>
+                ))}
+                {uncategorized.length > 0 && (
+                  <div className="space-y-1">
+                    {uncategorized.map((node, i) => <div key={i}>{node}</div>)}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="p-2 text-sm space-y-1">
-              {byCategory.get(cat)!.map((node, i) => (
-                <div key={i}>{node}</div>
-              ))}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -173,19 +199,19 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
           const withSuffix = multiplePartnerships ? ` — with ${p.instructor.name}` : ''
           for (const e of p.danceEntries) {
             const day = danceDay(e.dance.style, e.category)
+            const combo: Combo = { ageCategory: e.ageCategory, level: e.level }
             items.push({
               day,
               category: 'dance',
+              combo,
               node: (
                 <>
                   {e.dance.name} <span className="text-xs opacity-70">({e.category})</span>
-                  {' '}— {DANCE_AGE_LABELS[e.ageCategory] ?? AGE_LABELS[e.ageCategory] ?? e.ageCategory} · {e.level}
                   {withSuffix}
                 </>
               ),
             })
 
-            const combo: Combo = { ageCategory: e.ageCategory, level: e.level }
             const comboKey = comboKeyStr(combo)
             if (!sheets.has(comboKey)) sheets.set(comboKey, { combo, entries: [] })
             sheets.get(comboKey)!.entries.push({
@@ -264,10 +290,10 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
           })
         }
 
-        const byDay = new Map<Day, { category: Category; node: React.ReactNode }[]>()
+        const byDay = new Map<Day, { category: Category; node: React.ReactNode; combo?: Combo }[]>()
         for (const item of items) {
           if (!byDay.has(item.day)) byDay.set(item.day, [])
-          byDay.get(item.day)!.push({ category: item.category, node: item.node })
+          byDay.get(item.day)!.push({ category: item.category, node: item.node, combo: item.combo })
         }
 
         const sheetList = Array.from(sheets.values()).sort((a, b) => comboLabel(a.combo).localeCompare(comboLabel(b.combo)))
