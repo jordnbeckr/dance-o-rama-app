@@ -75,6 +75,13 @@ function initials(name: string) {
   return name.split(' ').filter(Boolean).map(w => w[0]!.toUpperCase()).slice(0, 2).join('')
 }
 
+// Instructors only have one "name" field (no separate first/last), so the
+// last whitespace-separated word stands in for a last name when sorting.
+function lastNameOf(name: string) {
+  const parts = name.trim().split(/\s+/)
+  return parts[parts.length - 1] ?? name
+}
+
 // Same square-initials badge either way — it names "the other person" on an
 // entry line: an instructor's name in the student view, a student's name in
 // the instructor view.
@@ -578,25 +585,31 @@ export default async function SummaryPage({
               )
             )
 
-            return (
-              <PersonSummaryBlock
-                key={student.id}
-                id={student.id}
-                name={`${student.firstName} ${student.lastName}`}
-                leftBadges={activeInstructors.map(name => <PersonBadgeDark key={name} name={name} />)}
-                rightExtras={
-                  <>
-                    <StudentDayBadges student={student} />
-                    {plaqueRequested && <PlaqueBadgeDark />}
-                  </>
-                }
-                entryCountLabel={hasAnything ? `${items.length} entr${items.length === 1 ? 'y' : 'ies'}` : 'No entries yet'}
-                items={items}
-                sheets={sheets}
-                noEntriesExtra={<PaidDaysBadge student={student} />}
-              />
-            )
-          })}
+            return {
+              count: items.length,
+              lastName: student.lastName,
+              node: (
+                <PersonSummaryBlock
+                  key={student.id}
+                  id={student.id}
+                  name={`${student.firstName} ${student.lastName}`}
+                  leftBadges={activeInstructors.map(name => <PersonBadgeDark key={name} name={name} />)}
+                  rightExtras={
+                    <>
+                      <StudentDayBadges student={student} />
+                      {plaqueRequested && <PlaqueBadgeDark />}
+                    </>
+                  }
+                  entryCountLabel={hasAnything ? `${items.length} entr${items.length === 1 ? 'y' : 'ies'}` : 'No entries yet'}
+                  items={items}
+                  sheets={sheets}
+                  noEntriesExtra={<PaidDaysBadge student={student} />}
+                />
+              ),
+            }
+          })
+            .sort((a, b) => b.count - a.count || a.lastName.localeCompare(b.lastName))
+            .map(b => b.node)}
         </>
       ) : (
         <>
@@ -714,21 +727,27 @@ export default async function SummaryPage({
               ])
             )
 
-            return (
-              <PersonSummaryBlock
-                key={instructor.id}
-                id={instructor.id}
-                name={instructor.name}
-                leftBadges={activeStudents.map(name => <PersonBadgeDark key={name} name={name} />)}
-                rightExtras={
-                  plaqueCount > 0 ? <PlaqueBadgeDark text={`${plaqueCount} plaque${plaqueCount === 1 ? '' : 's'} requested`} /> : null
-                }
-                entryCountLabel={hasAnything ? `${items.length} entr${items.length === 1 ? 'y' : 'ies'}` : 'No entries yet'}
-                items={items}
-                sheets={sheets}
-              />
-            )
-          })}
+            return {
+              count: items.length,
+              lastName: lastNameOf(instructor.name),
+              node: (
+                <PersonSummaryBlock
+                  key={instructor.id}
+                  id={instructor.id}
+                  name={instructor.name}
+                  leftBadges={activeStudents.map(name => <PersonBadgeDark key={name} name={name} />)}
+                  rightExtras={
+                    plaqueCount > 0 ? <PlaqueBadgeDark text={`${plaqueCount} plaque${plaqueCount === 1 ? '' : 's'} requested`} /> : null
+                  }
+                  entryCountLabel={hasAnything ? `${items.length} entr${items.length === 1 ? 'y' : 'ies'}` : 'No entries yet'}
+                  items={items}
+                  sheets={sheets}
+                />
+              ),
+            }
+          })
+            .sort((a, b) => b.count - a.count || a.lastName.localeCompare(b.lastName))
+            .map(b => b.node)}
         </>
       )}
     </div>
