@@ -25,7 +25,7 @@ export default function AgeLevelPicker({
   return (
     <div className="card overflow-hidden">
       <div
-        className="text-xs font-bold uppercase tracking-wide px-3 py-2"
+        className="text-xs font-bold uppercase tracking-wide px-3 py-2 text-center"
         style={{ backgroundColor: SHEET_COLOR, color: '#fff', letterSpacing: '.06em' }}
       >
         Add a Dance Sheet
@@ -33,7 +33,7 @@ export default function AgeLevelPicker({
       <div className="p-3 flex flex-col items-center gap-3">
         <div className="flex items-end gap-3 flex-wrap justify-center">
           <div>
-            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--muted)' }}>Age</label>
+            <label className="block text-xs font-semibold mb-1 text-center" style={{ color: 'var(--muted)' }}>Age</label>
             <select
               value={age}
               onChange={e => setAge(e.target.value)}
@@ -47,7 +47,7 @@ export default function AgeLevelPicker({
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--muted)' }}>Level</label>
+            <label className="block text-xs font-semibold mb-1 text-center" style={{ color: 'var(--muted)' }}>Level</label>
             <select
               value={level}
               onChange={e => setLevel(e.target.value)}

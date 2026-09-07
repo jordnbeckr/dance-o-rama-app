@@ -44,6 +44,21 @@ const CATEGORY_COLORS: Record<Category, string> = {
   formation: ORANGE,
 }
 
+// Opaque pastel fills — NOT a semi-transparent tint of CATEGORY_COLORS.
+// A transparent tint blends with whatever's behind it, so the same
+// category would look different (and slightly muddy) depending on which
+// day's tinted section it happened to sit inside. Solid color reads
+// identically everywhere.
+const PURPLE_BG = '#ede9fe'
+const ORANGE_BG = '#ffedd5'
+const CATEGORY_BG: Record<Category, string> = {
+  dance: PURPLE_BG,
+  division: ORANGE_BG,
+  couple: ORANGE_BG,
+  solo: ORANGE_BG,
+  formation: ORANGE_BG,
+}
+
 const CATEGORY_ORDER: Category[] = ['dance', 'division', 'couple', 'solo', 'formation']
 
 type Combo = { ageCategory: string; level: string }
@@ -63,8 +78,8 @@ function InstructorBadge({ name }: { name: string }) {
   return (
     <span
       title={name}
-      className="inline-flex items-center justify-center rounded-full text-xs font-bold"
-      style={{ width: 20, height: 20, backgroundColor: 'var(--header)', color: '#fff', flexShrink: 0 }}
+      className="inline-flex items-center justify-center font-bold"
+      style={{ width: 20, height: 20, borderRadius: 5, border: '1.5px solid var(--header)', color: 'var(--header)', fontSize: '0.6rem', flexShrink: 0 }}
     >
       {initials(name)}
     </span>
@@ -79,10 +94,10 @@ function SheetCard({ combo, entries }: { combo: Combo; entries: { day: Day; node
   }
 
   return (
-    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: `1px solid ${CATEGORY_COLORS.dance}55` }}>
+    <div className="rounded overflow-hidden break-inside-avoid" style={{ border: `1px solid ${CATEGORY_COLORS.dance}` }}>
       <div
         className="text-xs font-bold uppercase tracking-wide px-2.5 py-1.5"
-        style={{ backgroundColor: `${CATEGORY_COLORS.dance}1a`, color: CATEGORY_COLORS.dance }}
+        style={{ backgroundColor: CATEGORY_BG.dance, color: CATEGORY_COLORS.dance }}
       >
         {comboLabel(combo)}
       </div>
@@ -132,10 +147,10 @@ function DaySection({ day, items }: { day: Day; items: { category: Category; nod
           const comboGroups = Array.from(byCombo.values()).sort((a, b) => comboLabel(a.combo).localeCompare(comboLabel(b.combo)))
 
           return (
-            <div key={cat} className="rounded overflow-hidden" style={{ border: `1px solid ${CATEGORY_COLORS[cat]}55` }}>
+            <div key={cat} className="rounded overflow-hidden" style={{ border: `1px solid ${CATEGORY_COLORS[cat]}` }}>
               <div
                 className="text-xs font-bold uppercase tracking-wide px-2 py-1"
-                style={{ backgroundColor: `${CATEGORY_COLORS[cat]}1a`, color: CATEGORY_COLORS[cat] }}
+                style={{ backgroundColor: CATEGORY_BG[cat], color: CATEGORY_COLORS[cat] }}
               >
                 {CATEGORY_LABELS[cat]}
               </div>
@@ -226,7 +241,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
         const sheets = new Map<string, { combo: Combo; entries: { day: Day; node: React.ReactNode }[] }>()
 
         for (const p of student.partnerships) {
-          const withSuffix = multiplePartnerships ? ` — with ${p.instructor.name}` : ''
+          const instructorBadge = multiplePartnerships ? <> <InstructorBadge name={p.instructor.name} /></> : null
           for (const e of p.danceEntries) {
             const day = danceDay(e.dance.style, e.category)
             const combo: Combo = { ageCategory: e.ageCategory, level: e.level }
@@ -237,7 +252,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
               node: (
                 <>
                   {e.dance.name} <span className="text-xs opacity-70">({e.category})</span>
-                  {withSuffix}
+                  {instructorBadge}
                 </>
               ),
             })
@@ -246,7 +261,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
             if (!sheets.has(comboKey)) sheets.set(comboKey, { combo, entries: [] })
             sheets.get(comboKey)!.entries.push({
               day,
-              node: <>{e.dance.name} <span className="text-xs opacity-70">({e.category})</span>{withSuffix}</>,
+              node: <>{e.dance.name} <span className="text-xs opacity-70">({e.category})</span>{instructorBadge}</>,
             })
           }
           for (const e of p.divisionEntries) {
@@ -259,7 +274,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
                 <>
                   {DIVISION_SECTIONS[e.section as DivisionSectionKey]?.label ?? e.section} — {e.eventName}
                   {' '}<span className="text-xs opacity-70">({divisionAgeLabel(e.section as DivisionSectionKey, e.ageCategory)})</span>
-                  {withSuffix}
+                  {instructorBadge}
                 </>
               ),
             })
@@ -277,7 +292,9 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
             node: (
               <>
                 {COUPLE_EVENT_SECTIONS[e.section as CoupleEventSectionKey]?.label ?? e.section} — {e.eventName}
-                {' '}with {e.partnerStudent ? `${e.partnerStudent.firstName} ${e.partnerStudent.lastName} (${e.partnerStudent.studio.name})` : e.partnerInstructor?.name}
+                {e.partnerStudent
+                  ? <> with {e.partnerStudent.firstName} {e.partnerStudent.lastName} ({e.partnerStudent.studio.name})</>
+                  : e.partnerInstructor && <> <InstructorBadge name={e.partnerInstructor.name} /></>}
               </>
             ),
           })
@@ -316,7 +333,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
             node: (
               <>
                 {m.team.name} <span className="text-xs opacity-70">({m.team.danceName})</span>
-                {m.instructor && <> &amp; {m.instructor.name}</>}
+                {m.instructor && <> <InstructorBadge name={m.instructor.name} /></>}
               </>
             ),
           })

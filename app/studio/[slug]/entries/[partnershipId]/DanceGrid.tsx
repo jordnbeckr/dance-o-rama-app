@@ -144,7 +144,7 @@ export default function DanceGrid({
 
   return (
     <div className="card p-4 space-y-3">
-      <div>
+      <div className="text-center">
         <h2 className="font-bold text-base">Age Category and Level</h2>
         <p className="text-xs" style={{ color: 'var(--muted)' }}>
           Pick an age and level above to start a new sheet, or click a sheet below to open it.
@@ -165,7 +165,7 @@ export default function DanceGrid({
       )}
 
       {derivedGroups.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap justify-center gap-1.5">
           {derivedGroups.map(g => {
             const key = comboKeyStr(g)
             const count = entries.filter(e => e.ageCategory === g.ageCategory && e.level === g.level).length
@@ -188,7 +188,7 @@ export default function DanceGrid({
         </div>
       )}
 
-      <p className="text-xs" style={{ color: 'var(--muted)' }}>
+      <p className="text-xs text-center" style={{ color: 'var(--muted)' }}>
         {`Dances are disabled if ${student.firstName} hasn't paid for that day. Each style is tinted to the day it runs.`}
       </p>
 
