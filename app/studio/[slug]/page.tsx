@@ -20,12 +20,13 @@ function MentorIcon() {
     </svg>
   )
 }
-function NoteIcon() {
+function ListIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ width: 14, height: 14 }}>
-      <path d="M8 14V4l8-2v10" />
-      <circle cx="6" cy="15" r="2.3" fill="currentColor" stroke="none" />
-      <circle cx="14" cy="12" r="2.3" fill="currentColor" stroke="none" />
+      <circle cx="3.2" cy="5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="3.2" cy="10" r="1" fill="currentColor" stroke="none" />
+      <circle cx="3.2" cy="15" r="1" fill="currentColor" stroke="none" />
+      <path d="M7 5h10M7 10h10M7 15h10" />
     </svg>
   )
 }
@@ -84,7 +85,7 @@ export default async function StudioDashboard({ params }: { params: Promise<{ sl
   const tiles = [
     { label: 'Students', value: studentCount, href: `/studio/${slug}/roster`, color: JEWEL.garnet, icon: <PersonIcon /> },
     { label: 'Instructors', value: instructorCount, href: `/studio/${slug}/roster`, color: JEWEL.emerald, icon: <MentorIcon /> },
-    { label: 'Dance Entries', value: danceEntryCount, href: `/studio/${slug}/entries`, color: JEWEL.sapphire, icon: <NoteIcon /> },
+    { label: 'Entries', value: danceEntryCount, href: `/studio/${slug}/entries`, color: JEWEL.sapphire, icon: <ListIcon /> },
     { label: 'Division Entries', value: divisionEntryCount, href: `/studio/${slug}/entries`, color: JEWEL.amethyst, icon: <RibbonIcon /> },
     { label: 'Couple Events', value: coupleEventCount, href: `/studio/${slug}/entries`, color: JEWEL.topaz, icon: <CoupleIcon /> },
     { label: 'Solo/Show Routines', value: soloCount, href: `/studio/${slug}/entries`, color: JEWEL.garnet, icon: <StarIcon /> },
@@ -109,7 +110,7 @@ export default async function StudioDashboard({ params }: { params: Promise<{ sl
     },
     {
       color: JEWEL.emerald,
-      title: 'Confirm & submit',
+      title: 'Confirm',
       body: <>Review the <Link href={`/studio/${slug}/summary`} className="underline">Summary</Link> page before the deadline to make sure everything&apos;s correct.</>,
     },
   ]
@@ -143,7 +144,17 @@ export default async function StudioDashboard({ params }: { params: Promise<{ sl
             key={t.label}
             href={t.href}
             className="hover:shadow-md transition-shadow"
-            style={{ borderRadius: 10, padding: '12px 10px', color: '#fff', background: t.color, boxShadow: '0 6px 14px rgba(15,25,35,.18)' }}
+            style={{
+              borderRadius: 10,
+              padding: '12px 10px',
+              color: '#fff',
+              background: t.color,
+              boxShadow: '0 6px 14px rgba(15,25,35,.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+            }}
           >
             <div
               style={{
@@ -172,34 +183,23 @@ export default async function StudioDashboard({ params }: { params: Promise<{ sl
         <div className="grid grid-cols-3 gap-6">
           {steps.map((s, i) => (
             <div key={s.title}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                <div
-                  style={{
-                    width: 34,
-                    height: 34,
-                    flexShrink: 0,
-                    borderRadius: '50%',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: 15,
-                    background: s.color,
-                  }}
-                >
-                  {i + 1}
-                </div>
-                {i < steps.length - 1 && (
-                  <div
-                    style={{
-                      flex: 1,
-                      height: 2,
-                      marginLeft: 10,
-                      background: 'repeating-linear-gradient(to right, var(--border-dark) 0 6px, transparent 6px 12px)',
-                    }}
-                  />
-                )}
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  flexShrink: 0,
+                  borderRadius: '50%',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: 15,
+                  background: s.color,
+                  marginBottom: 12,
+                }}
+              >
+                {i + 1}
               </div>
               <p style={{ fontSize: '0.9rem', fontWeight: 700, margin: '0 0 4px' }}>{s.title}</p>
               <p style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>{s.body}</p>
