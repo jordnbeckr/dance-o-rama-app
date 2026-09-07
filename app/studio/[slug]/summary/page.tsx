@@ -86,6 +86,71 @@ function InstructorBadge({ name }: { name: string }) {
   )
 }
 
+// Light-on-dark counterpart of InstructorBadge, PaidDaysBadge, and the
+// plaque pill — for use inside the navy student banner where the light-bg
+// versions elsewhere in the app wouldn't have enough contrast.
+function InstructorBadgeDark({ name }: { name: string }) {
+  return (
+    <span
+      title={name}
+      className="inline-flex items-center justify-center font-bold"
+      style={{ width: 20, height: 20, borderRadius: 5, border: '1.5px solid rgba(255,255,255,.6)', color: '#fff', fontSize: '0.6rem', flexShrink: 0 }}
+    >
+      {initials(name)}
+    </span>
+  )
+}
+
+const DAY_SHORT: Record<Day, string> = { Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat' }
+
+function StudentDayBadges({ student }: { student: { paidThursday: boolean; paidFriday: boolean; paidSaturday: boolean } }) {
+  const paid = DAYS.filter(d => (d === 'Thursday' ? student.paidThursday : d === 'Friday' ? student.paidFriday : student.paidSaturday))
+  if (paid.length === 0) {
+    return <span style={{ color: 'rgba(255,255,255,.55)', fontSize: '0.7rem', fontStyle: 'italic' }}>no paid days</span>
+  }
+  return (
+    <span className="inline-flex items-center gap-1">
+      {paid.map(d => (
+        <span
+          key={d}
+          style={{ backgroundColor: 'rgba(255,255,255,.18)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}
+        >
+          {DAY_SHORT[d]}
+        </span>
+      ))}
+    </span>
+  )
+}
+
+const GOLD = '#f5cb5c'
+
+function PlaqueBadgeDark() {
+  return (
+    <span
+      className="inline-flex items-center gap-1"
+      style={{ backgroundColor: 'rgba(255,255,255,.18)', color: GOLD, fontSize: '0.7rem', fontWeight: 700, padding: '3px 10px', borderRadius: 12 }}
+    >
+      <svg viewBox="0 0 20 20" style={{ width: 12, height: 12, flexShrink: 0 }}>
+        <path
+          d="M6 3h8v3.2c0 2.6-1.8 4.6-4 4.8v2h2.5v1.5h-6.5V13H8v-2c-2.2-.2-4-2.2-4-4.8V3z"
+          fill={GOLD}
+          stroke={GOLD}
+          strokeWidth="1.3"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M6 4.2H3.8a1.4 1.4 0 0 0-1.4 1.6c.25 1.7 1.4 2.9 3 3.1M14 4.2h2.2a1.4 1.4 0 0 1 1.4 1.6c-.25 1.7-1.4 2.9-3 3.1"
+          fill="none"
+          stroke={GOLD}
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
+      </svg>
+      Plaque requested
+    </span>
+  )
+}
+
 function SheetCard({ combo, entries }: { combo: Combo; entries: { day: Day; node: React.ReactNode }[] }) {
   const byDay = new Map<Day, React.ReactNode[]>()
   for (const e of entries) {
@@ -104,7 +169,12 @@ function SheetCard({ combo, entries }: { combo: Combo; entries: { day: Day; node
       <div className="p-2.5 text-sm space-y-2">
         {DAYS.filter(day => byDay.has(day)).map(day => (
           <div key={day}>
-            <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: DAY_COLORS[day] }}>{day}</p>
+            <p
+              className="text-xs font-bold uppercase tracking-wide mb-1 inline-block px-2 py-0.5 rounded"
+              style={{ backgroundColor: DAY_COLORS[day], color: '#fff' }}
+            >
+              {day}
+            </p>
             <div className="space-y-0.5">
               {byDay.get(day)!.map((node, i) => <div key={i}>{node}</div>)}
             </div>
@@ -157,7 +227,12 @@ function DaySection({ day, items }: { day: Day; items: { category: Category; nod
               <div className="p-2 text-sm space-y-2" style={{ backgroundColor: 'var(--card)' }}>
                 {comboGroups.map(g => (
                   <div key={comboKeyStr(g.combo)}>
-                    <p className="text-xs font-semibold mb-1" style={{ color: 'var(--muted)' }}>{comboLabel(g.combo)}</p>
+                    <p
+                      className="text-xs font-bold uppercase tracking-wide mb-1 inline-block px-2 py-0.5 rounded"
+                      style={{ backgroundColor: '#2a3545', color: '#fff' }}
+                    >
+                      {comboLabel(g.combo)}
+                    </p>
                     <div className="space-y-1">
                       {g.nodes.map((node, i) => <div key={i}>{node}</div>)}
                     </div>
@@ -209,9 +284,25 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 print:max-w-full">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">{studio.name} — Dance-O-Rama Summary</h1>
-        <p className="text-sm" style={{ color: 'var(--muted)' }}>Printable rollup of every entry, per student, organized by day</p>
+      <div style={{ background: 'linear-gradient(135deg, var(--header) 0%, #26365a 100%)', borderRadius: 8, padding: '20px 24px', textAlign: 'center' }}>
+        <span
+          style={{
+            display: 'inline-block',
+            background: 'rgba(255,255,255,.14)',
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '.08em',
+            textTransform: 'uppercase',
+            padding: '4px 12px',
+            borderRadius: 12,
+            marginBottom: 10,
+          }}
+        >
+          Dance-O-Rama Summary
+        </span>
+        <h1 style={{ color: '#fff', fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: '-0.01em' }}>{studio.name}</h1>
+        <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, margin: '6px 0 0' }}>Printable rollup of every entry, per student, organized by day</p>
       </div>
 
       {studio.students.length === 0 && (
@@ -241,7 +332,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
         const sheets = new Map<string, { combo: Combo; entries: { day: Day; node: React.ReactNode }[] }>()
 
         for (const p of student.partnerships) {
-          const instructorBadge = multiplePartnerships ? <> <InstructorBadge name={p.instructor.name} /></> : null
+          const instructorBadge = multiplePartnerships ? <><InstructorBadge name={p.instructor.name} /> </> : null
           for (const e of p.danceEntries) {
             const day = danceDay(e.dance.style, e.category)
             const combo: Combo = { ageCategory: e.ageCategory, level: e.level }
@@ -251,8 +342,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
               combo,
               node: (
                 <>
-                  {e.dance.name} <span className="text-xs opacity-70">({e.category})</span>
-                  {instructorBadge}
+                  {instructorBadge}{e.dance.name} <span className="text-xs opacity-70">({e.category})</span>
                 </>
               ),
             })
@@ -261,7 +351,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
             if (!sheets.has(comboKey)) sheets.set(comboKey, { combo, entries: [] })
             sheets.get(comboKey)!.entries.push({
               day,
-              node: <>{e.dance.name} <span className="text-xs opacity-70">({e.category})</span>{instructorBadge}</>,
+              node: <>{instructorBadge}{e.dance.name} <span className="text-xs opacity-70">({e.category})</span></>,
             })
           }
           for (const e of p.divisionEntries) {
@@ -272,9 +362,8 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
               category: 'division',
               node: (
                 <>
-                  {DIVISION_SECTIONS[e.section as DivisionSectionKey]?.label ?? e.section} — {e.eventName}
+                  {instructorBadge}{DIVISION_SECTIONS[e.section as DivisionSectionKey]?.label ?? e.section} — {e.eventName}
                   {' '}<span className="text-xs opacity-70">({divisionAgeLabel(e.section as DivisionSectionKey, e.ageCategory)})</span>
-                  {instructorBadge}
                 </>
               ),
             })
@@ -291,10 +380,9 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
             category: e.section === 'Club' ? 'division' : 'couple',
             node: (
               <>
+                {!e.partnerStudent && e.partnerInstructor && <><InstructorBadge name={e.partnerInstructor.name} /> </>}
                 {COUPLE_EVENT_SECTIONS[e.section as CoupleEventSectionKey]?.label ?? e.section} — {e.eventName}
-                {e.partnerStudent
-                  ? <> with {e.partnerStudent.firstName} {e.partnerStudent.lastName} ({e.partnerStudent.studio.name})</>
-                  : e.partnerInstructor && <> <InstructorBadge name={e.partnerInstructor.name} /></>}
+                {e.partnerStudent && <> with {e.partnerStudent.firstName} {e.partnerStudent.lastName} ({e.partnerStudent.studio.name})</>}
               </>
             ),
           })
@@ -332,8 +420,8 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
             category: 'formation',
             node: (
               <>
+                {m.instructor && <><InstructorBadge name={m.instructor.name} /> </>}
                 {m.team.name} <span className="text-xs opacity-70">({m.team.danceName})</span>
-                {m.instructor && <> <InstructorBadge name={m.instructor.name} /></>}
               </>
             ),
           })
@@ -357,15 +445,25 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
           )
         )
 
+        // Name, paid days, plaque, and instructors live in one banner block —
+        // it's the always-visible face of the collapsed row AND the header
+        // for the entries revealed when it's clicked open.
         const summaryLine = (
-          <summary className="cursor-pointer flex items-center gap-3 flex-wrap">
-            <span className="font-bold text-lg">{student.firstName} {student.lastName}</span>
-            {activeInstructors.map(name => <InstructorBadge key={name} name={name} />)}
-            <PaidDaysBadge student={student} />
-            {plaqueRequested && <span className="text-xs font-medium" style={{ color: 'var(--accent)' }}>🏆 plaque requested</span>}
-            <span className="text-xs" style={{ color: 'var(--muted)' }}>
-              {hasAnything ? `${items.length} entr${items.length === 1 ? 'y' : 'ies'}` : 'No entries yet'}
-            </span>
+          <summary
+            className="cursor-pointer flex items-center justify-between gap-3 flex-wrap"
+            style={{ background: 'linear-gradient(135deg, var(--header) 0%, #26365a 100%)', padding: '14px 18px' }}
+          >
+            <div className="flex items-center gap-2 flex-wrap">
+              <span style={{ color: '#fff', fontWeight: 800, fontSize: '1.1rem' }}>{student.firstName} {student.lastName}</span>
+              {activeInstructors.map(name => <InstructorBadgeDark key={name} name={name} />)}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <StudentDayBadges student={student} />
+              {plaqueRequested && <PlaqueBadgeDark />}
+              <span style={{ color: 'rgba(255,255,255,.6)', fontSize: '0.7rem' }}>
+                {hasAnything ? `${items.length} entr${items.length === 1 ? 'y' : 'ies'}` : 'No entries yet'}
+              </span>
+            </div>
           </summary>
         )
 
@@ -382,29 +480,31 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
         }
 
         return (
-          <details key={student.id} className="card p-4 break-inside-avoid">
+          <details key={student.id} className="card overflow-hidden break-inside-avoid">
             {summaryLine}
-            <p className="text-xs font-bold uppercase tracking-wide mt-3" style={{ color: 'var(--muted)' }}>
-              All entries, by day
-            </p>
-            <div className="grid gap-3 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-              {DAYS.filter(day => byDay.has(day)).map(day => (
-                <DaySection key={day} day={day} items={byDay.get(day)!} />
-              ))}
-            </div>
+            <div className="p-4">
+              <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>
+                All entries, by day
+              </p>
+              <div className="grid gap-3 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+                {DAYS.filter(day => byDay.has(day)).map(day => (
+                  <DaySection key={day} day={day} items={byDay.get(day)!} />
+                ))}
+              </div>
 
-            {sheetList.length > 0 && (
-              <>
-                <p className="text-xs font-bold uppercase tracking-wide mt-4" style={{ color: 'var(--muted)' }}>
-                  Individual dances, by age/level sheet
-                </p>
-                <div className="grid gap-3 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-                  {sheetList.map(s => (
-                    <SheetCard key={comboKeyStr(s.combo)} combo={s.combo} entries={s.entries} />
-                  ))}
-                </div>
-              </>
-            )}
+              {sheetList.length > 0 && (
+                <>
+                  <p className="text-xs font-bold uppercase tracking-wide mt-4" style={{ color: 'var(--muted)' }}>
+                    Individual dances, by age/level sheet
+                  </p>
+                  <div className="grid gap-3 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+                    {sheetList.map(s => (
+                      <SheetCard key={comboKeyStr(s.combo)} combo={s.combo} entries={s.entries} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </details>
         )
       })}
