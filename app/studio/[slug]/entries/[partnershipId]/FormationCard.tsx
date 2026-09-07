@@ -54,7 +54,7 @@ export default function FormationCard({
         className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2"
         style={{ backgroundColor: DAY_BG_COLORS[FORMATION_DAY], color: DAY_COLORS[FORMATION_DAY], borderBottom: '1px solid var(--border)' }}
       >
-        <span>Formation Teams</span>
+        <span>Formation Team</span>
         <span
           style={{
             backgroundColor: DAY_COLORS[FORMATION_DAY],

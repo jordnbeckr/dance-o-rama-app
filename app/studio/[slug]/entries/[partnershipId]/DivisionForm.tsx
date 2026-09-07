@@ -10,14 +10,15 @@ type Selection = { ages: string[]; events: string[] }
 
 const SECTION_KEYS = Object.keys(DIVISION_SECTIONS) as DivisionSectionKey[]
 
-// A section that runs entirely on one day gets that day's actual color —
-// it genuinely IS that day, so there's no confusion. A section that mixes
-// days (Scholarship) gets a distinct non-day color instead, so it never
-// reads as "this one's Friday" (or Thursday) when it isn't.
+// A section that runs entirely on one day gets a jewel-toned version of
+// that day's color — a hint of the day identity without the stark, primary
+// intensity of the raw day color. A section that mixes days (Scholarship)
+// gets a distinct non-day color instead, so it never reads as "this one's
+// Friday" (or Thursday) when it isn't.
 const SECTION_COLORS: Record<DivisionSectionKey, string> = {
-  AllAround: DAY_COLORS.Saturday,
-  OpenBronze3Dance: DAY_COLORS.Friday,
-  Scholarship: JEWEL_TONES.topaz,
+  AllAround: JEWEL_TONES.garnet,
+  OpenBronze3Dance: JEWEL_TONES.sapphire,
+  Scholarship: JEWEL_TONES.gold,
 }
 
 function cellKey(age: string, eventName: string) {

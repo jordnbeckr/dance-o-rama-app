@@ -145,9 +145,9 @@ export default function DanceGrid({
   return (
     <div className="card p-4 space-y-3">
       <div>
-        <h2 className="font-bold text-base">Individual Dances</h2>
+        <h2 className="font-bold text-base">Age Category and Level</h2>
         <p className="text-xs" style={{ color: 'var(--muted)' }}>
-          {`Dances are disabled if ${student.firstName} hasn't paid for that day. Each style is tinted to the day it runs.`}
+          Pick an age and level above to start a new sheet, or click a sheet below to open it.
         </p>
       </div>
 
@@ -188,13 +188,9 @@ export default function DanceGrid({
         </div>
       )}
 
-      {!activeCombo && (
-        <p className="text-sm italic" style={{ color: 'var(--muted)' }}>
-          {derivedGroups.length > 0
-            ? 'Pick an age and level above to start a new sheet, or click a sheet above to open it.'
-            : 'Pick an age and level above to start a sheet.'}
-        </p>
-      )}
+      <p className="text-xs" style={{ color: 'var(--muted)' }}>
+        {`Dances are disabled if ${student.firstName} hasn't paid for that day. Each style is tinted to the day it runs.`}
+      </p>
 
       {activeCombo && (
         <div className="rounded overflow-hidden">

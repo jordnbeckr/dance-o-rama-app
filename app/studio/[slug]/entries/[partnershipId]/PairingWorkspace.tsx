@@ -80,7 +80,7 @@ export default function PairingWorkspace({
         />
       </div>
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+      <div className="space-y-2">
         <SoloCard
           slug={slug}
           studentId={studentId}

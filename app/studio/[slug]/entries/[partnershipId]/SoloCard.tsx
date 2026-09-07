@@ -71,7 +71,7 @@ export default function SoloCard({
         className="text-xs font-bold uppercase tracking-wide px-3 py-2 flex items-center justify-between gap-2"
         style={{ backgroundColor: DAY_BG_COLORS[SOLO_DAY], color: DAY_COLORS[SOLO_DAY], borderBottom: '1px solid var(--border)' }}
       >
-        <span>Solo Routines</span>
+        <span>Solo Routine</span>
         <span
           style={{
             backgroundColor: DAY_COLORS[SOLO_DAY],

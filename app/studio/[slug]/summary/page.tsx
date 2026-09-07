@@ -11,6 +11,7 @@ import {
   coupleEventDay,
   DAYS,
   DAY_COLORS,
+  DAY_BG_COLORS,
   SOLO_DAY,
   FORMATION_DAY,
   danceDay,
@@ -23,23 +24,24 @@ type DayItem = { day: Day; category: Category; node: React.ReactNode; combo?: Co
 
 const CATEGORY_LABELS: Record<Category, string> = {
   dance: 'Individual Dances',
-  division: 'Divisions',
+  division: 'Competitive Events',
   couple: 'Couple Events',
   solo: 'Solo / Show',
   formation: 'Formation Teams',
 }
 
-// None of these categories run on just one day (a "Divisions" box on a
-// given day might hold All-Around, Open Bronze, or Scholarship entries,
-// each with a different real day) — so they stay off red/blue/green
-// entirely, even nested inside a same-colored day header, to keep the
-// distinction between "this is Thursday" and "this is a category" clean.
+// Individual Dances is purple; everything else shares one orange — simple,
+// and neither reads as a day color even nested inside a same-colored day
+// header (a "Competitive Events" box on a given day might hold All-Around,
+// Open Bronze, or Scholarship entries, each with a different real day).
+const PURPLE = '#7c3aed'
+const ORANGE = '#c2410c'
 const CATEGORY_COLORS: Record<Category, string> = {
-  dance: '#7a2f4e',
-  division: '#5b3a75',
-  couple: '#8a6a2e',
-  solo: '#b45309',
-  formation: '#78350f',
+  dance: PURPLE,
+  division: ORANGE,
+  couple: ORANGE,
+  solo: ORANGE,
+  formation: ORANGE,
 }
 
 const CATEGORY_ORDER: Category[] = ['dance', 'division', 'couple', 'solo', 'formation']
@@ -51,6 +53,22 @@ function comboKeyStr(c: Combo) {
 }
 function comboLabel(c: Combo) {
   return `${DANCE_AGE_LABELS[c.ageCategory] ?? AGE_LABELS[c.ageCategory] ?? c.ageCategory} · ${c.level}`
+}
+
+function initials(name: string) {
+  return name.split(' ').filter(Boolean).map(w => w[0]!.toUpperCase()).slice(0, 2).join('')
+}
+
+function InstructorBadge({ name }: { name: string }) {
+  return (
+    <span
+      title={name}
+      className="inline-flex items-center justify-center rounded-full text-xs font-bold"
+      style={{ width: 20, height: 20, backgroundColor: 'var(--header)', color: '#fff', flexShrink: 0 }}
+    >
+      {initials(name)}
+    </span>
+  )
 }
 
 function SheetCard({ combo, entries }: { combo: Combo; entries: { day: Day; node: React.ReactNode }[] }) {
@@ -97,7 +115,7 @@ function DaySection({ day, items }: { day: Day; items: { category: Category; nod
       >
         {day}
       </div>
-      <div className="p-2.5 space-y-2">
+      <div className="p-2.5 space-y-2" style={{ backgroundColor: DAY_BG_COLORS[day] }}>
         {CATEGORY_ORDER.filter(cat => byCategory.has(cat)).map(cat => {
           const entries = byCategory.get(cat)!
           const byCombo = new Map<string, { combo: Combo; nodes: React.ReactNode[] }>()
@@ -253,7 +271,9 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
           if (!day) continue
           items.push({
             day,
-            category: 'couple',
+            // Club 3-Dance is a division in spirit (open freestyle, not a
+            // couple-search event) — group it with Competitive Events.
+            category: e.section === 'Club' ? 'division' : 'couple',
             node: (
               <>
                 {COUPLE_EVENT_SECTIONS[e.section as CoupleEventSectionKey]?.label ?? e.section} — {e.eventName}
@@ -267,7 +287,7 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
           if (!day) continue
           items.push({
             day,
-            category: 'couple',
+            category: e.section === 'Club' ? 'division' : 'couple',
             node: (
               <>
                 {COUPLE_EVENT_SECTIONS[e.section as CoupleEventSectionKey]?.label ?? e.section} — {e.eventName}
@@ -312,10 +332,18 @@ export default async function SummaryPage({ params }: { params: Promise<{ slug: 
 
         const hasAnything = items.length > 0
         const plaqueRequested = student.partnerships.some(p => p.awardPlaque)
+        const activeInstructors = Array.from(
+          new Set(
+            student.partnerships
+              .filter(p => p.danceEntries.length > 0 || p.divisionEntries.length > 0)
+              .map(p => p.instructor.name)
+          )
+        )
 
         const summaryLine = (
           <summary className="cursor-pointer flex items-center gap-3 flex-wrap">
             <span className="font-bold text-lg">{student.firstName} {student.lastName}</span>
+            {activeInstructors.map(name => <InstructorBadge key={name} name={name} />)}
             <PaidDaysBadge student={student} />
             {plaqueRequested && <span className="text-xs font-medium" style={{ color: 'var(--accent)' }}>🏆 plaque requested</span>}
             <span className="text-xs" style={{ color: 'var(--muted)' }}>

@@ -28,6 +28,7 @@ export const JEWEL_TONES = {
   sapphire: '#2c4a7c',
   amethyst: '#5b3a75',
   topaz: '#8a6a2e',
+  gold: '#b8860b',
 } as const
 
 // Solo Routines (Section 7) and Formation Teams (Section 8) each run on a

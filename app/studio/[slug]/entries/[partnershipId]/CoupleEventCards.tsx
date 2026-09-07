@@ -4,11 +4,11 @@ import { useState, useTransition, useEffect, useRef } from 'react'
 import { addCoupleEventEntry, removeCoupleEventEntry, searchPartners } from '@/app/actions/coupleEvents'
 import { COUPLE_EVENT_SECTIONS, DAY_COLORS, DAY_BG_COLORS, JEWEL_TONES, studentHasPaidFor } from '@/lib/divisions'
 
-// Club runs entirely on Thursday, so it gets Thursday's actual color — no
-// confusion, since it genuinely is that day. Amateur Couple mixes Friday
-// and Saturday, so it stays a distinct non-day color instead.
+// Club runs entirely on Thursday, so it gets a jewel-toned emerald — a hint
+// of that day identity without a stark, primary green. Amateur Couple
+// mixes Friday and Saturday, so it stays a distinct non-day color instead.
 const AMATEUR_COLOR = JEWEL_TONES.amethyst
-const CLUB_COLOR = DAY_COLORS.Thursday
+const CLUB_COLOR = JEWEL_TONES.emerald
 
 type StudentPaid = { firstName: string; paidThursday: boolean; paidFriday: boolean; paidSaturday: boolean }
 type CoupleEntry = {
