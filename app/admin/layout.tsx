@@ -14,7 +14,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         className="sticky top-0 z-50 flex items-center gap-0 shadow-md"
         style={{ backgroundColor: 'var(--header)', minHeight: 64 }}
       >
-        <div className="px-6 py-4 flex items-center gap-2 border-r border-white/10">
+        <div className="px-6 py-4 flex items-center gap-3 border-r border-white/10">
+          <a href={TOOLKIT_URL} title="Back to the Toolkit" aria-label="Back to the Toolkit" className="inline-flex items-center justify-center shrink-0 rounded-[11px] hover:bg-white/25 transition-colors" style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.3)' }}><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M9 5L3.5 10.5 9 16M4 10.5h8.5a5 5 0 0 1 5 5V17" /></svg></a>
           <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="3" stroke="white" strokeWidth="1.5"/>
             <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
@@ -38,7 +39,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3 px-5">
-          <a href={TOOLKIT_URL} className="text-xs text-white/70 hover:text-white transition-colors">‹ Toolkit</a>
           <Link href="/" className="text-xs text-white/50 hover:text-white/80 transition-colors">
             ← Home
           </Link>
